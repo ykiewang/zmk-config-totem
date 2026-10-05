@@ -1,0 +1,21 @@
+# Swift (host/macos)
+.build/
+DerivedData/
+*.swiftpm/
+Packages/
+xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Python (tools)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp

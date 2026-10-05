@@ -17,3 +17,8 @@ config ZMK_SPLIT
     default y
 
 endif
+
+config ZMK_TOTEM_GATT_STATUS
+    bool "Expose keyboard status (layer+mods) over a custom GATT characteristic"
+    depends on ZMK_BLE
+    default n

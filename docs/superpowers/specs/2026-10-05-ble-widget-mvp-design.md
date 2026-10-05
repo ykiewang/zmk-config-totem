@@ -14,7 +14,7 @@
 
 ## 1. 目标与范围
 
-把原本显示在键盘 OLED 上的状态搬到电脑上的一个**常驻角落悬浮窗**。
+把原本显示在键盘 OLED 上的状态搬到电脑上的一个**常驻悬浮窗**（位置可拖动、持久化）。
 
 **MVP（本期）**：实时显示
 1. 当前最高激活层的**层名**（如 `BASE`/`NAVI`/`SYM`/`ADJ`）
@@ -38,7 +38,7 @@ HID 指示灯（Caps/Num/Scroll）、Bongo Cat、开机自启、可配置 UI、�
 ├─ GATT 接口契约（§3）  ← 固件与 PC 的唯一耦合点；定好后两侧可并行开发
 │
 └─ PC（Swift + AppKit app）
-     BLEClient 连接订阅 → KeyboardStatus 解析 payload → FloatingPanel 角落悬浮窗渲染
+     BLEClient 连接订阅 → KeyboardStatus 解析 payload → FloatingPanel 悬浮窗渲染
 ```
 
 ## 3. GATT 接口契约（核心，固件↔PC 唯一耦合点）
@@ -126,13 +126,18 @@ HID 指示灯（Caps/Num/Scroll）、Bongo Cat、开机自启、可配置 UI、�
 
 **悬浮窗（NSWindow 技术属性）**
 - `styleMask = .borderless`；`level = .floating`；`isOpaque = false`；`backgroundColor = .clear`；半透明圆角背景。
-- 点击穿透：`ignoresMouseEvents = true`；不抢焦点：`canBecomeKey = false`。
-- `collectionBehavior = [.canJoinAllSpaces, .stationary]`（切桌面/全屏仍可见）。
-- 定位：固定屏幕右上角 + 边距（MVP 固定，不做可拖/可配）。
+- **可拖动**：`isMovableByWindowBackground = true`（borderless 窗口靠此才能拖）；拖动后把 `frame` 存
+  `UserDefaults`（key 含屏幕标识），下次启动/换屏恢复；首次启动默认右上角 + 边距。
+- **点击穿透 vs 可拖动的冲突与解法**：`ignoresMouseEvents = true`（穿透，不挡下层）会同时让窗口**抓不住、无法拖**。
+  二者互斥，故做成**菜单栏开关**：
+  - 「锁定/穿透」关闭（默认）：可拖动，但会挡住下层点击；
+  - 「锁定/穿透」开启：`ignoresMouseEvents = true`，不挡下层，但不可拖。
+  - 两种状态都持久化；拖动请先确保开关处于"未锁定"。
+- 不抢焦点：`canBecomeKey = false`；`collectionBehavior = [.canJoinAllSpaces, .stationary]`（切桌面/全屏仍可见）。
 
 **app 形态 / 菜单栏**
 - `LSUIElement = true`（Info.plist）：无 dock 图标，纯菜单栏 + 悬浮窗。
-- `NSStatusItem`：显示连接状态；菜单项 = 重连 / 退出。MVP 无设置界面。
+- `NSStatusItem`：显示连接状态；菜单项 = 重连 / 锁定·穿透(开关) / 退出。MVP 无设置界面。
 - 开机自启：本期不做（后续 `SMAppService`）。
 
 **渲染布局（已选：单行·合并四符）**

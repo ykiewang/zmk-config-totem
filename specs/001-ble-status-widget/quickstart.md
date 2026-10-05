@@ -8,7 +8,7 @@ in `contracts/status-snapshot.md`; entity shapes in `data-model.md`.
 - TOTEM keyboard with a SEEED XIAO BLE central (left) half, flashed with firmware
   built from this branch.
 - macOS host with Bluetooth enabled and the widget app built.
-- The reworked probe script (`tools/probe.py`) for firmware-side checks.
+- The probe script (`tools/probe.py`, CoreBluetooth) for firmware-side checks.
 
 ## Build & flash (firmware)
 
@@ -24,8 +24,16 @@ before.
 
 ## Verify firmware on device
 
-Run the reworked probe (`tools/probe.py`), which subscribes to the custom
-characteristic and prints `[idx][mods][name]`.
+Run the probe (`tools/probe.py`), which on macOS uses CoreBluetooth to find the
+already-connected keyboard (an active BLE HID device stops advertising, so a plain
+scan won't find it), subscribes to the custom characteristic, and prints
+`[idx][mods][name]`:
+
+```bash
+python3 -m venv tools/.venv
+tools/.venv/bin/pip install bleak        # also pulls in pyobjc on macOS
+tools/.venv/bin/python tools/probe.py
+```
 
 | Step | Action | Expected |
 |------|--------|----------|
@@ -36,9 +44,14 @@ characteristic and prints `[idx][mods][name]`.
 
 ## Build & run (host)
 
-1. Build the app; launch it.
-2. Confirm no Dock icon appears and a menu-bar item is present
-   (`LSUIElement`).
+```bash
+cd host/macos
+swift build -c release
+.build/release/BleWidget
+```
+
+1. Confirm no Dock icon appears and a menu-bar item is present (`LSUIElement`).
+2. Run the host unit tests any time with `swift test` (from `host/macos`).
 
 ## End-to-end scenarios
 

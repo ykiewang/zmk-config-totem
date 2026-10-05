@@ -83,34 +83,41 @@ specs/001-ble-status-widget/
 ```text
 config/boards/shields/totem/
 ├── gatt_status.c        # NEW: GATT service, state read, change-detect, notify
-├── CMakeLists.txt       # NEW: shield-scoped build guarded by symbol + central role
-├── Kconfig              # NEW/adjusted: CONFIG_ZMK_TOTEM_GATT_STATUS (depends on ZMK_BLE)
-├── totem.conf           # EDITED: enable CONFIG_ZMK_TOTEM_GATT_STATUS=y
+├── CMakeLists.txt       # NEW: shield-scoped build guarded by symbol + BLE + central role
+├── Kconfig.defconfig    # EDITED: declares CONFIG_ZMK_TOTEM_GATT_STATUS (depends on ZMK_BLE)
+├── Kconfig.shield       # existing (unchanged)
 ├── totem.dtsi           # existing (unchanged)
 ├── totem_left.overlay   # existing (unchanged)
 └── totem_right.overlay  # existing (unchanged)
 
 config/
-└── totem.conf           # EDITED (keyboard-level enable)
+└── totem.conf           # EDITED: enable CONFIG_ZMK_TOTEM_GATT_STATUS=y (keyboard-level)
 
 host/macos/
-├── BleWidget.xcodeproj/  (or Package.swift)
+├── Package.swift        # SPM: BleWidget (app) + BleWidgetCore (logic) + BleWidgetTests
+├── Info.plist           # LSUIElement = true
 ├── Sources/
-│   ├── main.swift
-│   ├── AppDelegate.swift         # menu-bar item + app lifecycle
-│   ├── BLEClient.swift           # CoreBluetooth connect/subscribe/reconnect
-│   ├── KeyboardStatus.swift      # snapshot parse → {layerName, mods, connected}
-│   ├── FloatingPanel.swift       # borderless always-on-top window, drag/lock
-│   └── Info.plist                # LSUIElement = true
+│   ├── BleWidget/                # executable target (AppKit)
+│   │   ├── main.swift
+│   │   ├── AppDelegate.swift     # menu-bar item + app lifecycle
+│   │   └── FloatingPanel.swift   # borderless always-on-top window, drag/lock
+│   └── BleWidgetCore/            # library target (pure logic, no AppKit → unit-testable)
+│       ├── BLEClient.swift       # CoreBluetooth connect/subscribe/reconnect
+│       └── KeyboardStatus.swift  # snapshot parse → {layerIndex, layerName, mods, connected}
 └── Tests/
-    └── KeyboardStatusTests.swift  # XCTest parse boundaries
+    └── BleWidgetTests/
+        └── KeyboardStatusTests.swift  # XCTest parse + modifier-merge boundaries
 
 tools/
-└── probe.py             # reworked from feature/gatt-layer-probe for [idx][mods][name]
+└── probe.py             # CoreBluetooth probe (connected-peripheral discovery) for [idx][mods][name]
 ```
 
 **Structure Decision**: Firmware changes stay inside the existing TOTEM shield
 directory per Principle III — shield scope grants the needed header access
 (`CMAKE_SOURCE_DIR/include`) and per-role build gating without a separate module.
-The host is a new standalone app under `host/macos/`, coupled to firmware only
-through the status-snapshot contract (Principle I).
+The feature's Kconfig symbol is declared in the shield's existing `Kconfig.defconfig`
+(the shield has no standalone `Kconfig`), and the keyboard-level enable lives in
+`config/totem.conf`. The host is a new standalone Swift Package under `host/macos/`,
+split into a pure-logic `BleWidgetCore` target (so `KeyboardStatus` parsing is
+unit-testable via XCTest without AppKit) and the AppKit executable `BleWidget`;
+it is coupled to firmware only through the status-snapshot contract (Principle I).

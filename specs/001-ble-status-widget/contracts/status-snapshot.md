@@ -77,3 +77,14 @@ Variable-length, little-endian where multi-byte (no multi-byte fields in v1).
   version bump.
 - Reinterpreting existing byte positions or changing identifiers is breaking and
   requires a coordinated version bump on both sides.
+
+## Implementation notes (non-normative)
+
+These describe the current build; they do **not** alter the frozen layout above.
+
+- The firmware truncates `layer_name` to 32 bytes (`strnlen`, `LAYER_NAME_MAX`), so
+  a snapshot fits comfortably within the default ATT MTU. This is an implementation
+  limit, not a contract change — all four shipped layer names are far shorter.
+- Both consumers follow the Discovery note: the macOS app and `tools/probe.py` find
+  the keyboard by enumerating connected peripherals (CoreBluetooth
+  `retrieveConnectedPeripherals`), not by scanning.

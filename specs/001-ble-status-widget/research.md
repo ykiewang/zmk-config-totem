@@ -96,6 +96,11 @@ the project's probe-phase findings. No open NEEDS CLARIFICATION remains.
 - **Alternatives considered**: Native unit tests in Zephyr (`ztest`) for the
   shield (rejected — no harness in this config, disproportionate for the scope).
 
+- **As-built note**: `tools/probe.py` discovers the keyboard on macOS via
+  CoreBluetooth `retrieveConnectedPeripheralsWithServices:` (the same
+  connected-peripheral approach as R6), because a keyboard already connected to
+  the probing Mac stops advertising; active scanning is kept only as a fallback.
+
 ## R9. Host payload parsing robustness
 
 - **Decision**: Parse defensively — reject payloads shorter than 2 bytes; on

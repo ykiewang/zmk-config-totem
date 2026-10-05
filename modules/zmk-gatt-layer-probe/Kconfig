@@ -3,5 +3,6 @@ config ZMK_GATT_LAYER_PROBE
     depends on ZMK_BLE
     default n
     help
-      Exposes current highest layer ID via custom GATT service.
-      For Step-1 validation of custom 128-bit UUID discovery on macOS.
+      Exposes a fake layer value via a custom 128-bit GATT service.
+      For Step-1 validation of custom UUID discovery/read/notify on macOS.
+      Uses pure Zephyr BT API (no ZMK internal headers).

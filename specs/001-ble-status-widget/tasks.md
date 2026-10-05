@@ -135,7 +135,7 @@ description: "Task list for BLE Keyboard Status Widget"
 **Purpose**: Final validation and hardening.
 
 - [X] T027 [P] Run the full XCTest suite and confirm all pass in `host/macos/Tests/`
-- [ ] T028 Confirm GitHub Actions builds all `build.yaml` targets (`totem_left`, `totem_right`, `settings_reset`) with the feature present only on the central half
+- [X] T028 Confirm GitHub Actions builds all `build.yaml` targets (`totem_left`, `totem_right`, `settings_reset`) with the feature present only on the central half
 - [ ] T029 Execute the `specs/001-ble-status-widget/quickstart.md` scenarios (13 end-to-end) and record results
 - [ ] T030 Verify idle behavior: 1-hour idle produces zero notifications (SC-002) via `tools/probe.py` log
 - [ ] T031 [P] Update `readme.md`/docs with the feature's usage (menu-bar controls, lock toggle) if warranted

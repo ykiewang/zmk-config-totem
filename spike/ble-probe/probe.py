@@ -9,12 +9,13 @@ BLE 共存探针（零固件 / 一次性丢弃物）
 目的：验证「键盘已被 macOS 系统当 HID 使用时，用户态程序能否同时读它的 GATT 特征」。
 
 用法：
-    python3 probe.py                     # 自动找名含 TOTEM 的已连接设备
+    python3 probe.py                     # 默认 battery 模式（step-0）
+    python3 probe.py --mode layer        # 自定义层号模式（step-1）
     python3 probe.py --name TOTEM
     python3 probe.py --notify-seconds 15 # notify 观察窗口（期间请打字）
 
 判定标准：
-  打字正常 且 读到电量 => ✅ 成功，路线 A 可行
+  打字正常 且 读到数据 => ✅ 成功，路线 A 可行
   连上后键盘掉线      => ❌ 失败，路线 A 需调整
 """
 
@@ -33,9 +34,14 @@ except ImportError:
     print("缺少依赖：pip install pyobjc-framework-CoreBluetooth", file=sys.stderr)
     raise
 
+# 标准服务（step-0 已验证）
 BATTERY_SERVICE = "180F"
 BATTERY_LEVEL   = "2A19"
 HID_SERVICE     = "1812"
+
+# 自定义服务（step-1 验证）
+CUSTOM_LAYER_SERVICE = "AA440AA0-F5ED-4C48-84A1-8062D20D3D55"
+CUSTOM_LAYER_CHAR    = "AA440AA1-F5ED-4C48-84A1-8062D20D3D55"
 
 CB_POWERED_ON = 5
 CB_STATE_NAMES = {0:"Unknown",1:"Resetting",2:"Unsupported",
@@ -153,6 +159,18 @@ class ProbeDelegate(NSObject):
 def run_probe(args) -> bool:
     d = ProbeDelegate.alloc().init()
 
+    # 根据 mode 选择要探测的服务和特征
+    if args.mode == "layer":
+        target_svc_uuid = CUSTOM_LAYER_SERVICE
+        target_char_uuid = CUSTOM_LAYER_CHAR
+        svc_name = "自定义层号"
+        char_name = "层号"
+    else:  # battery
+        target_svc_uuid = BATTERY_SERVICE
+        target_char_uuid = BATTERY_LEVEL
+        svc_name = "电量"
+        char_name = "电量"
+
     # 1. 等 BT 就绪
     log("创建 CBCentralManager，等待蓝牙就绪...")
     mgr = CBCentralManager.alloc().initWithDelegate_queue_(d, None)
@@ -163,12 +181,12 @@ def run_probe(args) -> bool:
         log(f"蓝牙错误：{d.bt_error}")
         return False
 
-    # 2. 枚举已连接外设
-    wanted = [CBUUID.UUIDWithString_(BATTERY_SERVICE),
+    # 2. 枚举已连接外设（用 HID + target service 两个 UUID 一起查）
+    wanted = [CBUUID.UUIDWithString_(target_svc_uuid),
               CBUUID.UUIDWithString_(HID_SERVICE)]
     peripherals = mgr.retrieveConnectedPeripheralsWithServices_(wanted)
     if not peripherals:
-        log("未找到已连接的电量/HID 外设，请确认键盘已蓝牙连接。")
+        log(f"未找到已连接的 {svc_name}/HID 外设，请确认键盘已蓝牙连接。")
         return False
     log("已连接外设：")
     for p in peripherals:
@@ -178,7 +196,7 @@ def run_probe(args) -> bool:
     log(f"选用：{target.identifier().UUIDString()}  name={target.name()!r}")
     target.setDelegate_(d)
 
-    # 3. connectPeripheral（对已连接设备，macOS 可能直接回调，也可能不回调）
+    # 3. connectPeripheral
     log("connectPeripheral_options_...")
     mgr.connectPeripheral_options_(target, None)
     if not pump_until(d.__dict__, "connected", timeout=6.0):
@@ -188,53 +206,62 @@ def run_probe(args) -> bool:
         return False
 
     # 4. discoverServices
-    log("discoverServices_ [180F]...")
-    target.discoverServices_([CBUUID.UUIDWithString_(BATTERY_SERVICE)])
+    log(f"discoverServices_ [{target_svc_uuid}]...")
+    target.discoverServices_([CBUUID.UUIDWithString_(target_svc_uuid)])
     if not pump_until(d.__dict__, "svcs_done", timeout=7.0):
         log("discoverServices 超时。")
         return False
     if not d.svcs:
-        log("未发现电量服务（180F）。该 ZMK 固件可能没启用 BAS，或键盘未授权 GATT。")
+        log(f"未发现{svc_name}服务（{target_svc_uuid}）。")
         return False
-    batt_svc = d.svcs[0]
+    svc = d.svcs[0]
 
     # 5. discoverCharacteristics
-    log("discoverCharacteristics_ [2A19]...")
+    log(f"discoverCharacteristics_ [{target_char_uuid}]...")
     target.discoverCharacteristics_forService_(
-        [CBUUID.UUIDWithString_(BATTERY_LEVEL)], batt_svc
+        [CBUUID.UUIDWithString_(target_char_uuid)], svc
     )
     if not pump_until(d.__dict__, "chars_done", timeout=7.0):
         log("discoverCharacteristics 超时。")
         return False
     if not d.chars:
-        log("未找到电量特征（2A19）。")
+        log(f"未找到{char_name}特征（{target_char_uuid}）。")
         return False
-    batt_char = d.chars[0]
+    char = d.chars[0]
 
     # 6. READ
-    log("readValueForCharacteristic_ [2A19]...")
-    target.readValueForCharacteristic_(batt_char)
+    log(f"readValueForCharacteristic_ [{target_char_uuid}]...")
+    target.readValueForCharacteristic_(char)
     if not pump_until(d.__dict__, "read_done", timeout=7.0):
         log("  [READ] 读取超时。")
         return False
     if d.read_error:
         log(f"  [READ] 失败：{d.read_error}")
         return False
-    level = d.read_val[0] if d.read_val else None
-    log(f"  [READ] 电量 = {level}%  (raw={d.read_val.hex()})")
+
+    # 解析并打印读取值
+    if args.mode == "layer":
+        layer_id = d.read_val[0] if d.read_val else None
+        log(f"  [READ] 层号 = {layer_id}  (raw={d.read_val.hex()})")
+    else:
+        level = d.read_val[0] if d.read_val else None
+        log(f"  [READ] 电量 = {level}%  (raw={d.read_val.hex()})")
 
     # 7. NOTIFY
-    target.setNotifyValue_forCharacteristic_(True, batt_char)
+    target.setNotifyValue_forCharacteristic_(True, char)
     log(f"  [NOTIFY] 已发起订阅，观察 {args.notify_seconds:.0f}s ——"
         f" 请现在手动打字，确认 HID 照常工作！")
     n_before = len(d.notify_vals)
     pump(args.notify_seconds)
     n_got = len(d.notify_vals) - n_before
     for v in d.notify_vals[n_before:]:
-        log(f"  [NOTIFY] 推送 = {v[0] if v else '?'}%  (raw={v.hex()})")
+        if args.mode == "layer":
+            log(f"  [NOTIFY] 推送层号 = {v[0] if v else '?'}  (raw={v.hex()})")
+        else:
+            log(f"  [NOTIFY] 推送电量 = {v[0] if v else '?'}%  (raw={v.hex()})")
     log(f"  [NOTIFY] 结束，收到 {n_got} 次"
-        f"（电量很少变化，0 次≠失败，READ 成功即可）。")
-    target.setNotifyValue_forCharacteristic_(False, batt_char)
+        f"（{char_name}很少变化，0 次≠失败，READ 成功即可）。")
+    target.setNotifyValue_forCharacteristic_(False, char)
     return True
 
 
@@ -243,6 +270,8 @@ def parse_args(argv=None):
         description="零固件 BLE 共存探针（纯 CoreBluetooth 同步版）"
     )
     p.add_argument("--name", default="TOTEM")
+    p.add_argument("--mode", choices=["battery", "layer"], default="battery",
+                   help="battery=标准电量服务(step-0), layer=自定义层号服务(step-1)")
     p.add_argument("--notify-seconds", type=float, default=12.0)
     return p.parse_args(argv)
 
@@ -250,7 +279,8 @@ def parse_args(argv=None):
 def main(argv=None):
     args = parse_args(argv)
     log("=" * 70)
-    log("BLE 共存探针启动。请确保 Totem 已作为蓝牙键盘连在这台 Mac 上。")
+    mode_desc = "标准电量服务(step-0)" if args.mode == "battery" else "自定义层号服务(step-1)"
+    log(f"BLE 共存探针启动 [{mode_desc}]。请确保 Totem 已作为蓝牙键盘连在这台 Mac 上。")
     log("=" * 70)
     try:
         ok = run_probe(args)
@@ -259,11 +289,16 @@ def main(argv=None):
         return 130
     log("=" * 70)
     if ok:
-        log("探针结果：✅ 成功读到 GATT 电量。")
-        log("若刚才打字全程正常 => HID+GATT(CoreBluetooth) 共存成立，路线 A 基础验证通过。")
-        log("下一步：写自定义 GATT 服务固件（<100 行），用同一脚本验自定义 UUID。")
+        if args.mode == "layer":
+            log("探针结果：✅ 成功读到自定义 GATT 层号。")
+            log("若刚才打字全程正常 => 自定义 128-bit UUID 服务验证通过，step-1 完成！")
+            log("路线 A 完全验证，可进正式实现（层名+修饰键+PC 悬浮窗）。")
+        else:
+            log("探针结果：✅ 成功读到 GATT 电量。")
+            log("若刚才打字全程正常 => HID+GATT(CoreBluetooth) 共存成立，路线 A 基础验证通过。")
+            log("下一步：--mode layer 验证自定义 UUID。")
     else:
-        log("探针结果：❌ 未能读到 GATT 电量。请对照日志判断卡在哪一环。")
+        log("探针结果：❌ 未能读到 GATT 数据。请对照日志判断卡在哪一环。")
     log("=" * 70)
     return 0 if ok else 1
 

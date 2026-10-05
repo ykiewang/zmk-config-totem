@@ -1,4 +1,0 @@
-name: zmk-gatt-layer-probe
-build:
-  cmake: .
-  kconfig: Kconfig

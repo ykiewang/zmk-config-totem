@@ -7,7 +7,5 @@ manifest:
       remote: zmkfirmware
       revision: main
       import: app/west.yml
-    - name: zmk-gatt-layer-probe
-      path: modules/zmk-gatt-layer-probe
   self:
     path: config

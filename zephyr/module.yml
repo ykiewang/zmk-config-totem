@@ -1,0 +1,4 @@
+name: zmk-config-totem-gatt-probe
+build:
+  cmake: modules/zmk-gatt-layer-probe
+  kconfig: modules/zmk-gatt-layer-probe/Kconfig

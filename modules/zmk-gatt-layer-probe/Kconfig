@@ -1,0 +1,6 @@
+config ZMK_GATT_LAYER_PROBE
+    bool "Enable GATT layer probe (custom UUID test)"
+    default n
+    help
+      Exposes current highest layer ID via custom GATT service.
+      For Step-1 validation of custom 128-bit UUID discovery on macOS.

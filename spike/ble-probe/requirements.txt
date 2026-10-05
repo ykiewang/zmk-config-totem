@@ -1,0 +1,2 @@
+# BLE 探针（一次性丢弃物）—— 仅需 bleak，macOS 会自动带入 pyobjc
+bleak>=0.21

@@ -72,7 +72,7 @@ description: "Task list for BLE Keyboard Status Widget"
 
 - [X] T014 [US1] Render the layer name as a text label in `host/macos/Sources/FloatingPanel.swift`
 - [X] T015 [US1] Wire `BLEClient` → `KeyboardStatus.parse` → panel label update in `host/macos/Sources/AppDelegate.swift`
-- [ ] T016 [US1] Board-level verify: build firmware, flash `totem_left`, run `tools/probe.py`, confirm `layer_index` + `layer_name` match physical layer for all four layers
+- [X] T016 [US1] Board-level verify: build firmware, flash `totem_left`, run `tools/probe.py`, confirm `layer_index` + `layer_name` match physical layer for all four layers
 
 **Checkpoint**: User Story 1 is fully functional — live layer readout delivered (MVP).
 

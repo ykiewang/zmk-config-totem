@@ -1,9 +1,9 @@
 # 方案：ZMK 键盘状态在电脑上的悬浮窗显示
 
-- 日期：2026-10-04
-- 状态：方案草案（探针待执行）
-- 目标仓库（PC 侧与探针脚本）：`zmk-dongle-display`
-- 键盘配置仓库：`GEIGEIGEIST/zmk-config-totem`
+- 日期：2026-10-04（2026-10-05 更新：探针完成，路线 A 验证通过）
+- 状态：**探针阶段完成，路线 A 已验证可行 → 进入正式实现设计**
+- 代码落点：探针脚本与固件模块均在 `zmk-config-totem`（`spike/`、`modules/`，分支 `feature/gatt-layer-probe`）
+- 键盘配置仓库：`ykiewang/zmk-config-totem`（硬件来自 `GEIGEIGEIST/totem`）
 
 ---
 
@@ -20,7 +20,7 @@ WPM、输出状态、外设电量等留待后续。
 - **无 dongle**：键盘（Totem，分体）的中央半直接连电脑，没有独立接收器。
 - **BLE 为主**：平时以蓝牙连接电脑，键盘在系统里表现为一个普通 BLE HID 键盘。
 - **平台**：先在 macOS（本机 CoreBluetooth）验证。
-- **硬件**：Totem 分体键盘，配置来自 `GEIGEIGEIST/zmk-config-totem`。
+- **硬件**：Totem 分体键盘，配置来自 `ykiewang/zmk-config-totem`。
 
 ## 3. 核心技术现实（决定整个方案的关键点）
 
@@ -38,13 +38,15 @@ WPM、输出状态、外设电量等留待后续。
 
 ## 4. 路线选择
 
-### 路线 A（选定）：自定义 GATT 服务 + PC 端订阅
-- 固件：新增一个独立 ZMK module，注册自定义 128-bit UUID 的 GATT 服务，含一个
-  特征（`READ | NOTIFY`）。订阅 ZMK 事件（`zmk_layer_state_changed`、
-  `zmk_modifiers_state_changed`、`zmk_keycode_state_changed`），把状态打包发送。
-- PC：Python + `bleak` 订阅该特征，Qt(PySide6) 悬浮窗渲染。
+### 路线 A（选定，已验证）：自定义 GATT 服务 + PC 端订阅
+- 固件：注册自定义 128-bit UUID 的 GATT 服务，含一个特征（`READ | NOTIFY`），
+  把状态打包发送。
+- PC：订阅该特征，悬浮窗渲染。
 - 优点：链路解耦、固件改动小、状态变化才推送、与 HID 共存不影响打字。
-- 风险：macOS 上"已被系统当 HID 的键盘"能否被用户态程序再连 GATT（见第 6 节）。
+- 风险（第 6 节）：macOS 上"已被系统当 HID 的键盘"能否被用户态程序再连 GATT。
+  → **已由探针验证通过，见第 7 节。**
+- 固件形态注记：探针用**独立 module** 跑通；但正式版要读**真实**层名/修饰键需调用
+  ZMK 内部 API，而独立 module 拿不到其 PRIVATE 头（见 §7 关键技术发现），形态待重新拍板。
 
 ### 路线 B（否决）：复用 ZMK Studio 的 RPC 通道
 - 消息定义在 `zmk-studio-messages` 仓库，需改官方协议、跟上游同步，**过重**。
@@ -55,74 +57,79 @@ WPM、输出状态、外设电量等留待后续。
 ## 5. 关键先例：`maxistar/zmk-gatt-layer`
 
 一个已被验证可编译可跑的 PoC，功能 = **把"当前激活层号"一个整数通过自定义 GATT
-发给电脑**。
+发给电脑**。作为固件骨架参考（`BT_GATT_SERVICE_DEFINE` + `READ | NOTIFY` 特征 +
+事件订阅 + 小端编码），本项目 step-1 即照此最小骨架起步。
 
-**固件侧**（`zmk-gatt-scalar` 模块，<100 行）：
-- `BT_GATT_SERVICE_DEFINE` 注册服务，UUID `12341234-1234-5678-7856-123412345678`；
-- 一个特征 `...5679`，属性 `READ | NOTIFY`，暴露一个 32-bit 整数（层号）；
-- 订阅 `zmk_layer_state_changed`，层变则写值并（若已订阅）`bt_gatt_notify`；
-- `SYS_INIT` 开机时读一次当前层号作初值；
-- 特征权限仅 `BT_GATT_PERM_READ`（普通读，**不要求配对/加密**）——这正是
-  macOS 上能与系统 HID 共存的可行原因。
+局限：只是 PoC、未测 macOS、只传层号一个整数、客户端仅 Rust 命令行。
 
-**PC 侧**（Rust CLI，`btleplug` + tokio）：
-- 扫描 → 按广播名或 service UUID 找键盘 → 连接 → 发现服务 → 定位特征；
-- **每 500ms 轮询读一次**（注意：实际用轮询，不是 notify），值变才打印。
+## 6. 不确定性 / 探针要回答的问题（历史背景）
 
-**对本项目的意义**：它给出了可直接照抄的最小骨架（GATT 服务定义、事件订阅、
-小端编码、BLE 客户端连接读取）。
-
-**它的局限**：
-- 只是 PoC，**未测 macOS**，未讨论 HID 共存；
-- **只传层号一个整数**，不含层名、修饰键、WPM；
-- 客户端只有 Rust 命令行版，无 Python/悬浮窗。
-
-## 6. 不确定性 / 探针要回答的问题
-
-1. 这台 Mac 上，键盘当 HID 用的同时，`bleak` 能否连上它的自定义 GATT 服务？
-2. 扫描能否发现它？（已连接的 BLE HID 设备通常停止广播，可能需走 macOS 的
-   `retrieveConnectedPeripheralsWithServices`，`bleak` 中对应
-   `retrieve_connected_peripherals`。）
+1. 这台 Mac 上，键盘当 HID 用的同时，用户态程序能否连上它的自定义 GATT 服务？
+2. 扫描能否发现它？（已连接的 BLE HID 设备通常停止广播。）
 3. 读特征、订阅 notify 在 macOS 上各自是否稳定？
 
-**已有的正面证据**：
-- `maxistar/zmk-gatt-layer` 证明"键盘 HID + 自定义 GATT 服务"架构成立；
-- ZMK 官方 Studio 的原生 app 支持 macOS，且支持在 BLE 连接下改键位——
-  这是"macOS 上能同时用 HID 与自定义 GATT"的最强背书。
+→ 以上三问均在第 7 节得到肯定答复。
 
-**仍缺的确认**：`bleak` 具体库 + ZMK 键盘组合在 macOS 上无公开确证，故探针仍值得做。
+## 7. 探针执行结果（2026-10-05，已完成）
 
-## 7. 探针方案（下一步执行）
+两步探针，产物在 `spike/ble-probe/`（PC 侧）与 `modules/zmk-gatt-layer-probe/`（固件）。
 
-产物皆为**一次性丢弃物**。
+### Step-0：标准电量 GATT（零固件）
+- 不改固件，直接读键盘已有的标准电量服务 `0x180F` / 特征 `0x2A19`。
+- 结果：✅ 读到电量值，订阅 NOTIFY 成功，**全程打字正常**。
+- 结论：macOS 上 **HID 与 GATT 可共存**，用户态程序能读被系统当 HID 的键盘的 GATT。
 
-**固件侧** —— 基于 `zmk-gatt-scalar` 骨架，几乎原样：
-- 自定义 GATT 服务 + 一个 `READ | NOTIFY` 特征，暴露当前最高层号
-  （`zmk_keymap_highest_layer_active()`），订阅 `zmk_layer_state_changed`。
-- 用 **Totem 的配置**编译（挂 `-DZMK_EXTRA_MODULES`），而非原仓库测试配置。
+### Step-1：自定义 128-bit UUID 服务（需固件）
+- 新增固件模块暴露自定义服务 `AA440AA0-…` / 特征 `AA440AA1-…`（`READ | NOTIFY`）。
+- 结果：✅ **发现** 自定义服务与特征、✅ **READ** 成功、✅ **NOTIFY** 收到定时推送，
+  **全程打字正常**。
+- 结论：自定义 128-bit UUID 服务同样可被 macOS 发现/读取/订阅。**路线 A 完全成立。**
 
-**PC 侧** —— 一个 Python `bleak` 脚本：
-- 两种发现方式都试：先扫描；扫不到再用 `retrieve_connected_peripherals`。
-- 连上后**分别测 read 和 start_notify**，打日志证明是否通。
-- 同时手动打字，确认 HID 照常工作。
+### 实现要点与踩坑（固化经验）
 
-**判定标准**：
-- 打字正常 **且** 脚本能读到层号（并尽量订阅成功）= **成功**；
-- 连上后键盘掉线 / 打不了字 = **失败**，路线 A 需调整
-  （例如改用第二条连接或换传输方案）。
+**PC 侧**：
+- **放弃 `bleak`，改用纯 CoreBluetooth（pyobjc）**。bleak 3.x 在 macOS 对"已连接
+  HID 设备"处理有坑（`BLEDevice.details` 需 `(CBPeripheral, delegate)` 元组等），
+  难以稳定复现。
+- CoreBluetooth 回调必须在**主线程 runloop** 触发；脚本做成**全同步、主线程自旋
+  runloop**，否则 `centralManagerDidUpdateState_` 等回调不触发。
+- 已连接的 BLE HID 设备**不再广播**，扫描发现不到；改用
+  `retrieveConnectedPeripheralsWithServices:` 直接枚举。
+- 其它：GATT 缓存（必要时移除配对避免读到旧值）、终端需在"系统设置›隐私›蓝牙"授权、
+  用 venv 的 `python3`。
 
-**编译方式**：倾向用键盘仓库的 GitHub Actions 出 `.uf2`，本地无需搭 west 环境，
-下载后刷入键盘。
+**固件侧**：
+- 本地模块加载：**仓库根放 `zephyr/module.yml`**，ZMK `build-user-config.yml` 检测到后
+  经 `-DZMK_EXTRA_MODULES` 把整个 config 仓库当 Zephyr module 编译。
+- `west.yml` **不能**把本地 `modules/` 目录当 project 列（project 必须可 fetch，
+  否则报 "Malformed manifest file"）。
+- 用 `depends on ZMK_BLE` + `if(CONFIG_…)` 守卫，使无蓝牙栈的 `settings_reset` 自动跳过编译。
+- GitHub Actions 出 `.uf2`，本地无需 west 环境。
 
-## 8. 待定项（执行前需拍板）
+**关键技术发现（决定正式版形态）**：
+- ZMK 内部头（`zmk/keymap.h` 等）在 `app/include`，以
+  **`target_include_directories(app PRIVATE)`** 暴露，**不导出给独立 module**。
+  独立 module `#include <zmk/keymap.h>` 会编译失败（`fatal error: zmk/keymap.h: No such file`）。
+- 故探针改用**纯 Zephyr BT API + 假层号**（定时器 0..7 循环推送）验证链路，不依赖 ZMK API。
+- **正式版要真实层名/修饰键，必须能访问 ZMK 内部 API** → 固件不宜是独立 module，
+  需把代码放进 **shield 内**（`config/boards/shields/totem/`，被 app 直接编译、可访问内部头）
+  或其他能拿到内部头的形态。这是正式版的**第一个待决策点**。
 
-1. 探针代码落点：
-   - A（推荐）：单独放本仓库 `zmk-dongle-display`（spike 分支/目录），不污染键盘仓库；
-   - B：直接加到 `GEIGEIGEIST/zmk-config-totem`。
-2. 编译方式确认：走 GitHub Actions（推荐）还是本地 west。
+## 8. 已拍板的决策
+
+1. **代码落点**：全部放 `zmk-config-totem`（否决原"放 `zmk-dongle-display`"草案）。
+   探针是一次性验证物，不值得独立建仓；正式版再评估是否提取。
+2. **编译方式**：GitHub Actions 出 `.uf2`（已验证可行）。
+3. **不以 ZMK Studio 作探针/方案**：会强制 physical-layout 迁移 + 删除现有 `chosen`
+   matrix-transform，改动过大。
+4. **分支**：spike 在 `feature/gatt-layer-probe`，不直接提交主干。
 
 ## 9. 里程碑
 
-1. 执行探针 → 拿到"macOS 上 HID 与自定义 GATT 能否共存 + `bleak` 走通方式"的结论。
-2. 依据结论完成正式设计（固件 payload 格式、轮询 vs 订阅、PC 应用架构）。
-3. 写实施计划 → 实现固件模块 + PC 悬浮窗。
+1. ✅ 执行探针 → 已确认"macOS 上 HID 与自定义 GATT 可共存，且自定义 128-bit UUID
+   可发现/读取/订阅"。走通方式 = 纯 CoreBluetooth + `retrieveConnectedPeripheralsWithServices`。
+2. ⏳ 正式设计：
+   - **固件形态**（独立 module 不行 → shield 内代码 or 其他能访问内部头的方式）；
+   - **payload 格式**（层名字符串 + 修饰键位掩码，`READ` + `NOTIFY`）；
+   - **PC 应用架构**（常驻连接 + 悬浮窗渲染）。
+3. ⏳ 写实施计划 → 实现固件（真实层名/修饰键）+ PC 悬浮窗。

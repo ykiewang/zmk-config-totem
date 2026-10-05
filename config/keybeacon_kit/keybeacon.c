@@ -1,6 +1,10 @@
 /*
  * Copyright (c) 2026 The TOTEM ZMK Contributors
  * SPDX-License-Identifier: MIT
+ *
+ * KeyBeacon shared logic: expose the active layer + modifier state over a
+ * custom GATT service. This file is keyboard-independent and MUST NOT be
+ * edited to port the feature to another keyboard — see README.md.
  */
 
 #include <zephyr/kernel.h>
@@ -15,10 +19,10 @@
 #include <zmk/events/layer_state_changed.h>
 #include <zmk/events/keycode_state_changed.h>
 
-#define GATT_STATUS_SERVICE_UUID \
+#define KEYBEACON_SERVICE_UUID \
     BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0xAA440AA0, 0xF5ED, 0x4C48, 0x84A1, 0x8062D20D3D55))
 
-#define GATT_STATUS_CHRC_UUID \
+#define KEYBEACON_CHRC_UUID \
     BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0xAA440AA1, 0xF5ED, 0x4C48, 0x84A1, 0x8062D20D3D55))
 
 #define PAYLOAD_HEADER_LEN 2
@@ -31,8 +35,6 @@ static uint8_t payload_len_cache;
 static uint8_t payload_buf[PAYLOAD_MAX];
 static uint8_t payload_len_buf;
 
-static struct bt_gatt_attr gatt_status_attrs[];
-
 static ssize_t read_status(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf,
                            uint16_t len, uint16_t offset) {
     return bt_gatt_attr_read(conn, attr, buf, len, offset, payload_cache, payload_len_cache);
@@ -40,9 +42,9 @@ static ssize_t read_status(struct bt_conn *conn, const struct bt_gatt_attr *attr
 
 static void ccc_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value) {}
 
-BT_GATT_SERVICE_DEFINE(totem_gatt_status_svc,
-    BT_GATT_PRIMARY_SERVICE(GATT_STATUS_SERVICE_UUID),
-    BT_GATT_CHARACTERISTIC(GATT_STATUS_CHRC_UUID,
+BT_GATT_SERVICE_DEFINE(keybeacon_svc,
+    BT_GATT_PRIMARY_SERVICE(KEYBEACON_SERVICE_UUID),
+    BT_GATT_CHARACTERISTIC(KEYBEACON_CHRC_UUID,
                            BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
                            BT_GATT_PERM_READ,
                            read_status, NULL, NULL),
@@ -77,21 +79,21 @@ static void update_and_notify(void) {
     memcpy(payload_cache, payload_buf, payload_len_buf);
     payload_len_cache = payload_len_buf;
 
-    bt_gatt_notify(NULL, &totem_gatt_status_svc.attrs[1], payload_cache, payload_len_cache);
+    bt_gatt_notify(NULL, &keybeacon_svc.attrs[1], payload_cache, payload_len_cache);
 }
 
-static int totem_gatt_status_cb(const zmk_event_t *eh) {
+static int keybeacon_cb(const zmk_event_t *eh) {
     update_and_notify();
     return ZMK_EV_EVENT_BUBBLE;
 }
 
-ZMK_LISTENER(totem_gatt_status, totem_gatt_status_cb);
-ZMK_SUBSCRIPTION(totem_gatt_status, zmk_layer_state_changed);
-ZMK_SUBSCRIPTION(totem_gatt_status, zmk_keycode_state_changed);
+ZMK_LISTENER(keybeacon, keybeacon_cb);
+ZMK_SUBSCRIPTION(keybeacon, zmk_layer_state_changed);
+ZMK_SUBSCRIPTION(keybeacon, zmk_keycode_state_changed);
 
-static int totem_gatt_status_init(void) {
+static int keybeacon_init(void) {
     build_payload(payload_cache, &payload_len_cache);
     return 0;
 }
 
-SYS_INIT(totem_gatt_status_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+SYS_INIT(keybeacon_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);

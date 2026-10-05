@@ -38,15 +38,21 @@ TOTEM is a 38 key column-staggered split keyboard running [ZMK](https://zmk.dev/
 
 An optional desktop companion that shows the keyboard's **live active layer** and
 **modifiers** in an always-on-top floating panel, driven over a custom BLE GATT
-characteristic from the central (left) half. See
+characteristic from the central (left) half. It works with **any ZMK keyboard that
+implements the KeyBeacon contract**, not just Totem. See
 [`specs/001-ble-status-widget/`](/specs/001-ble-status-widget) for the full design
-and the frozen interface contract.
+and the frozen interface contract, and
+[`specs/002-multi-keyboard-support/`](/specs/002-multi-keyboard-support) for the
+multi-keyboard decoupling.
 
 ### firmware
 
-- Enabled by `CONFIG_ZMK_TOTEM_GATT_STATUS` (already set in
+- Enabled by `CONFIG_ZMK_KEYBEACON` (already set in
   [`config/totem.conf`](/config/totem.conf)); compiled on the **central (left) role
   only** and gated on BLE, so the right half and `settings_reset` are unaffected.
+- The shared logic ships as a portable **KeyBeacon kit**
+  ([`config/keybeacon_kit/`](/config/keybeacon_kit)); its `README.md` is a porting
+  guide for adding the feature to another keyboard without editing the shared logic.
 - Publishes a notify-on-change snapshot `[layer_index][modifiers][layer_name]`.
   Nothing is sent while the state is unchanged, so there is no idle traffic.
 - Build and flash it exactly as above — the feature rides along in
@@ -70,9 +76,15 @@ Menu-bar controls:
 
 | item | shortcut | action |
 |------|----------|--------|
+| 键盘 (Keyboard) | — | pick which compatible keyboard the panel tracks; the choice is remembered and reconnected next launch |
 | 重连 (Reconnect) | `r` | re-run discovery and reconnect |
 | 锁定 / 穿透 (Lock / click-through) | `l` | toggle the panel between draggable and click-through |
 | 退出 (Quit) | `q` | quit the app |
+
+- The app identifies a keyboard purely by the KeyBeacon **service UUID** (never by
+  name) and shows the keyboard's **own BLE name** (a generic label if it reports
+  none). With one compatible keyboard it connects automatically; when several are
+  present it waits for you to pick one from the **键盘 (Keyboard)** menu.
 
 - **unlocked** (default): drag the panel anywhere; its position is remembered per
   screen and restored on the next launch.
@@ -101,14 +113,18 @@ tools/.venv/bin/python tools/probe.py
 [English](#en) · **中文**
 
 一个可选的桌面伴侣:在置顶悬浮窗中实时显示键盘的**当前层**与**修饰键**,数据由中央
-(左)半通过自定义 BLE GATT 特征推送。完整设计与冻结的接口契约见
-[`specs/001-ble-status-widget/`](/specs/001-ble-status-widget)。
+(左)半通过自定义 BLE GATT 特征推送。它适用于**任何实现 KeyBeacon 契约的 ZMK 键盘**,
+而不仅限于 Totem。完整设计与冻结的接口契约见
+[`specs/001-ble-status-widget/`](/specs/001-ble-status-widget),多键盘解耦见
+[`specs/002-multi-keyboard-support/`](/specs/002-multi-keyboard-support)。
 
 ### 固件
 
-- 由 `CONFIG_ZMK_TOTEM_GATT_STATUS` 开关控制(已在
+- 由 `CONFIG_ZMK_KEYBEACON` 开关控制(已在
   [`config/totem.conf`](/config/totem.conf) 中启用);**仅在中央(左)角色**编译并依赖
   BLE,因此右半与 `settings_reset` 不受影响。
+- 共享逻辑以可移植的 **KeyBeacon 套件**([`config/keybeacon_kit/`](/config/keybeacon_kit))
+  形式提供;其 `README.md` 是移植指南,无需改动共享逻辑即可将该特性加到别的键盘上。
 - 推送「仅变化才通知」的快照 `[层索引][修饰位][层名]`;状态不变时不发送,无空闲流量。
 - 构建与烧录方式同上 —— 该特性随 `totem_left` 一起编入。
 
@@ -130,9 +146,14 @@ swift build -c release
 
 | 菜单项 | 快捷键 | 作用 |
 |------|------|------|
+| 键盘 | — | 选择悬浮窗要跟踪的键盘;所选项会被记住并在下次启动时自动重连 |
 | 重连 | `r` | 重新发现并连接 |
 | 锁定 / 穿透 | `l` | 在「可拖动」与「点击穿透」之间切换 |
 | 退出 | `q` | 退出应用 |
+
+- 应用仅凭 KeyBeacon **服务 UUID** 识别键盘(绝不按名字匹配),并显示键盘**自报的 BLE
+  名字**(没有则显示通用占位名)。只有一把兼容键盘时自动连接;有多把时在**「键盘」**菜单
+  里选择其一。
 
 - **解锁**(默认):可随意拖动面板;位置按屏幕分别记忆,下次启动时恢复。
 - **锁定**:面板变为点击穿透(鼠标事件传递到下层窗口),且不可拖动;锁定状态跨重启保持。

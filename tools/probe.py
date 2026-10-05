@@ -86,16 +86,15 @@ class Probe(NSObject):
         conn = central.retrieveConnectedPeripheralsWithServices_(
             [HID_UUID, SERVICE_UUID]
         )
-        named = [p for p in conn if (p.name() or "").upper().find("TOTEM") >= 0]
-        self.candidates = list(named) if named else list(conn)
+        self.candidates = list(conn)
         if self.candidates:
             print("found %d connected candidate(s): %s"
                   % (len(self.candidates),
                      [str(p.name()) for p in self.candidates]))
             self._try_next()
         else:
-            print("no connected TOTEM found; falling back to scan (connect the "
-                  "keyboard to this Mac for the reliable path) ...")
+            print("no connected KeyBeacon keyboard found; falling back to scan "
+                  "(connect the keyboard to this Mac for the reliable path) ...")
             self.scanning = True
             central.scanForPeripheralsWithServices_options_([SERVICE_UUID], None)
             AppHelper.callLater(15.0, self._scan_timeout)
@@ -159,6 +158,8 @@ class Probe(NSObject):
             print("status service not present on this peripheral; trying next")
             self._try_next()
             return
+        print("status service confirmed on %r"
+              % (peripheral.name() or peripheral.identifier().UUIDString()))
         peripheral.discoverCharacteristics_forService_([CHAR_UUID], svc)
 
     def peripheral_didDiscoverCharacteristicsForService_error_(

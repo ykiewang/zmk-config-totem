@@ -18,7 +18,4 @@ config ZMK_SPLIT
 
 endif
 
-config ZMK_TOTEM_GATT_STATUS
-    bool "Expose keyboard status (layer+mods) over a custom GATT characteristic"
-    depends on ZMK_BLE
-    default n
+rsource "../../../keybeacon_kit/Kconfig.keybeacon"

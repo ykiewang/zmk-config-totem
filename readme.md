@@ -60,39 +60,21 @@ multi-keyboard decoupling.
 
 ### macOS app
 
-A menu-bar app (no Dock icon) lives under [`host/macos/`](/host/macos):
+The desktop app, the **KeyBeacon Protocol (KBP)** standard, and the conformance kit now live in
+their own repository: **<https://github.com/ykiewang/keybeacon>**.
 
-```bash
-cd host/macos
-swift build -c release
-.build/release/BleWidget
-```
+- **Download & run**: grab the latest `BleWidget-<version>.dmg`/`.zip` from the app repo's
+  [Releases](https://github.com/ykiewang/keybeacon/releases) — no terminal or build tools needed.
+  (The first builds are unsigned; the app repo's README has the one-time Gatekeeper first-open step.)
+- **Protocol**: the authoritative, versioned KBP standard is `protocol/` in the app repo; this
+  firmware pins an exact version under [`protocol-pinned/`](/protocol-pinned) and CI verifies the
+  snapshot has not diverged from the published tag.
+- **Make another keyboard conform**: use the app repo's `conformance/` kit (guide + checklist +
+  self-test tool).
 
-The panel shows the active layer name plus four fixed modifier indicators
-(**⇧ Shift · ⌃ Control · ⌥ Option · ⌘ Command**); the left and right halves of each
-modifier are merged into one indicator, and the slots never reflow.
-
-Menu-bar controls:
-
-| item | shortcut | action |
-|------|----------|--------|
-| 键盘 (Keyboard) | — | pick which compatible keyboard the panel tracks; the choice is remembered and reconnected next launch |
-| 重连 (Reconnect) | `r` | re-run discovery and reconnect |
-| 锁定 / 穿透 (Lock / click-through) | `l` | toggle the panel between draggable and click-through |
-| 退出 (Quit) | `q` | quit the app |
-
-- The app identifies a keyboard purely by the KeyBeacon **service UUID** (never by
-  name) and shows the keyboard's **own BLE name** (a generic label if it reports
-  none). With one compatible keyboard it connects automatically; when several are
-  present it waits for you to pick one from the **键盘 (Keyboard)** menu.
-
-- **unlocked** (default): drag the panel anywhere; its position is remembered per
-  screen and restored on the next launch.
-- **locked**: the panel becomes click-through (mouse events pass to whatever is
-  beneath it) and can no longer be dragged. The lock state persists across restarts.
-- The menu-bar icon reflects the connection state (connected / connecting / not
-  connected / Bluetooth unavailable) and the app reconnects on its own when the
-  keyboard reappears.
+The panel shows the active layer name plus four merged modifier indicators (⇧ ⌃ ⌥ ⌘). Full app
+usage — menu-bar controls, lock / click-through, and the multi-keyboard picker — is documented in
+the app repo.
 
 ### on-device probe (optional)
 
@@ -130,34 +112,18 @@ tools/.venv/bin/python tools/probe.py
 
 ### macOS 应用
 
-菜单栏应用(无 Dock 图标),位于 [`host/macos/`](/host/macos):
+桌面应用、**KeyBeacon 协议(KBP)** 标准与一致性套件现已迁出到独立仓库:
+**<https://github.com/ykiewang/keybeacon>**。
 
-```bash
-cd host/macos
-swift build -c release
-.build/release/BleWidget
-```
+- **下载即用**:到应用仓的 [Releases](https://github.com/ykiewang/keybeacon/releases) 下载最新
+  `BleWidget-<版本>.dmg`/`.zip`,无需终端或构建工具。(首批为未签名构建,应用仓 README 有
+  一次性的 Gatekeeper 首次打开步骤。)
+- **协议**:权威、带版本的 KBP 标准为应用仓的 `protocol/`;本固件在
+  [`protocol-pinned/`](/protocol-pinned) 固定一个确切版本,CI 校验该快照未偏离已发布的标签。
+- **让别的键盘兼容**:使用应用仓的 `conformance/` 套件(指南 + 清单 + 自测工具)。
 
-面板显示当前层名,以及四个固定的修饰指示
-(**⇧ Shift · ⌃ Control · ⌥ Option · ⌘ Command**);每个修饰键的左右两半合并为一个指示,
-槽位固定、不重排。
-
-菜单栏控制:
-
-| 菜单项 | 快捷键 | 作用 |
-|------|------|------|
-| 键盘 | — | 选择悬浮窗要跟踪的键盘;所选项会被记住并在下次启动时自动重连 |
-| 重连 | `r` | 重新发现并连接 |
-| 锁定 / 穿透 | `l` | 在「可拖动」与「点击穿透」之间切换 |
-| 退出 | `q` | 退出应用 |
-
-- 应用仅凭 KeyBeacon **服务 UUID** 识别键盘(绝不按名字匹配),并显示键盘**自报的 BLE
-  名字**(没有则显示通用占位名)。只有一把兼容键盘时自动连接;有多把时在**「键盘」**菜单
-  里选择其一。
-
-- **解锁**(默认):可随意拖动面板;位置按屏幕分别记忆,下次启动时恢复。
-- **锁定**:面板变为点击穿透(鼠标事件传递到下层窗口),且不可拖动;锁定状态跨重启保持。
-- 菜单栏图标反映连接状态(已连接 / 连接中 / 未连接 / 蓝牙不可用),键盘重新出现时自动重连。
+面板显示当前层名,以及四个合并后的修饰指示(⇧ ⌃ ⌥ ⌘)。应用的完整用法 —— 菜单栏控制、
+锁定 / 穿透、多键盘选择 —— 记录在应用仓中。
 
 ### 真机探针(可选)
 

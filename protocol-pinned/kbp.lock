@@ -1,0 +1,5 @@
+kbp_version:     1.0.0
+source_repo:     https://github.com/ykiewang/keybeacon
+source_ref:      protocol-v1.0.0
+source_commit:   69e55c14b2b5b4f2a2f225c5246bd8067862cd80
+snapshot_sha256: b44d6588370ba3ccf25c3d2a0aac84b00dec5d389d9a4468163a3d6aafa89a60

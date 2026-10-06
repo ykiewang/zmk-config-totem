@@ -3,3 +3,15 @@ on: [push, pull_request, workflow_dispatch]
 jobs:
   build:
     uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+
+  # Non-firmware gate: prove the vendored KBP snapshot is intact and has not
+  # diverged from the authoritative standard at the pinned tag (FR-008, SC-006).
+  # Runs without a board build; the online diff soft-skips when offline so the
+  # firmware's standalone build never depends on the app repo (SC-003).
+  verify-protocol-pin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: verify protocol pin (offline hash + online diff)
+        run: ./scripts/verify-protocol-pin.sh
+

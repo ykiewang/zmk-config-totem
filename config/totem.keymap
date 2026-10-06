@@ -69,10 +69,10 @@
             //                                     ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛
 
             bindings = <
-                &mt TAB Q         &kp W  &kp E      &kp R      &kp T          &kp Y      &kp U            &kp I       &kp O    &kp P
-                &mt LEFT_SHIFT A  &kp S  &kp D      &lt 3 F    &kp G          &kp H      &kp J            &kp K       &kp L    &mt RIGHT_SHIFT L
-&kp LA(K_COPY)  &kp Z             &kp X  &kp C      &kp V      &kp B          &kp N      &kp M            &kp COMMA   &kp DOT  &mt RIGHT_COMMAND SLASH  &kp BACKSPACE
-                                         &kp LCTRL  &lt 1 TAB  &lt 1 SPACE    &lt 2 RET  &lt 2 BACKSPACE  &kp ESCAPE
+                  &mt TAB Q         &kp W  &kp E      &kp R      &kp T          &kp Y      &kp U            &kp I       &kp O    &kp P
+                  &mt LEFT_SHIFT A  &kp S  &kp D      &lt 3 F    &kp G          &kp H      &kp J            &kp K       &kp L    &mt RIGHT_SHIFT L
+&kp LEFT_COMMAND  &kp Z             &kp X  &kp C      &kp V      &kp B          &kp N      &kp M            &kp COMMA   &kp DOT  &mt RIGHT_COMMAND SLASH  &kp BACKSPACE
+                                           &kp LCTRL  &lt 1 TAB  &lt 1 SPACE    &lt 2 RET  &lt 2 BACKSPACE  &kp ESCAPE
             >;
         };
 

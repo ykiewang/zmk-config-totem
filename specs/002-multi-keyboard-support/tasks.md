@@ -201,10 +201,11 @@ shield; it builds for that keyboard's central role only, emits the status snapsh
       the host), keep the `retrieveConnectedPeripheralsWithServices_([HID_UUID, SERVICE_UUID])`
       enumeration and the scan fallback, and print the discovered peripheral's `.name` for confirmation
       (FR-012 / MR7).
-- [ ] T022 [US3] Verify via the repo's GitHub Actions build that all three `build.yaml` targets
+- [X] T022 [US3] Verify via the repo's GitHub Actions build that all three `build.yaml` targets
       (`totem_left`, `totem_right`, `settings_reset`) build, and that the kit object/service-UUID symbol
       is linked **only** in the central (`totem_left`) image and absent from `totem_right` and
       `settings_reset` (FR-010 / SC-004; needs T017–T020).
+      <!-- Verified: run 37333276541 — all 3 targets ✓; keybeacon.c compiles only in totem_left. -->
 
 **Checkpoint**: Totem builds unchanged behavior from a reusable kit; the feature is central-only; the
 probe and a scratch port both work via the service contract.
@@ -265,9 +266,12 @@ the remembered one and shows its status in a single panel; switching updates the
 - [ ] T029 Run the `quickstart.md` validation scenarios A–G end to end and confirm each expected
       outcome (firmware targets/central-only, scratch port ≤10 steps with no shared-logic edits,
       `swift test` green, non-Totem connect, choose/remember, legacy-settings upgrade, probe-by-contract).
+      <!-- A/B/C/F verified (CI run 37333276541 + swift test); D/E/G need hardware — see checklists/hardware-validation.md -->
 - [ ] T030 [P] Confirm against the T001 baseline that feature 001's acceptance scenarios still pass with
       no regression (SC-004) and that conveying the name adds zero idle traffic over a 1-hour idle
       session (SC-007).
+      <!-- Host regression + firmware CI verified; SC-005 restart & SC-007 1h idle need hardware — see checklists/hardware-validation.md -->
+
 
 ---
 

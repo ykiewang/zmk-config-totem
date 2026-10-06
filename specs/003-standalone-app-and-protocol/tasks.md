@@ -42,16 +42,16 @@ This feature spans **two repositories**:
 **Purpose**: Capture the no-regression baseline and perform the history-preserving split that seeds
 the app repo (research R1, R2).
 
-- [ ] T001 Capture the pre-split baseline in the firmware repo: run `swift build` + `swift test` in
+- [X] T001 Capture the pre-split baseline in the firmware repo: run `swift build` + `swift test` in
       `host/macos/` and confirm firmware builds all `build.yaml` targets (`totem_left`,
       `totem_right`, `settings_reset`); record pass/output as the no-regression reference for
       FR-016 / SC-008.
-- [ ] T002 [P] Author the migration script `scripts/migrate/split-app-repo.sh` (+
+- [X] T002 [P] Author the migration script `scripts/migrate/split-app-repo.sh` (+
       `scripts/migrate/README.md`) that history-preservingly maps `host/macos/` → `app/macos/`,
       `specs/003-standalone-app-and-protocol/protocol/` → `protocol/`, and seeds `conformance/` from
       `tools/probe.py`, using `git subtree split` (fallback `git filter-repo`); supports
       `--dry-run` to print planned splits and the target tree without writing (research R2).
-- [ ] T003 Execute `scripts/migrate/split-app-repo.sh` to produce the local `keybeacon/` working
+- [X] T003 Execute `scripts/migrate/split-app-repo.sh` to produce the local `keybeacon/` working
       tree (preserved commits on `app/macos/` and `conformance/`), `git init` it, set
       `origin=https://github.com/ykiewang/keybeacon.git`; do **not** push (push is the documented
       manual maintainer step, T031). Verify `git -C keybeacon log --oneline -- app/macos` shows
@@ -67,14 +67,14 @@ builds on. **No user story may begin until this phase passes.**
 **⚠️ CRITICAL**: The no-regression gate (T004) blocks US1/US3/US4 (they touch app code); the repo
 scaffolding (T005/T006) blocks all stories.
 
-- [ ] T004 No-regression gate: in `keybeacon/app/macos/` run `swift build` + `swift test` and confirm
+- [X] T004 No-regression gate: in `keybeacon/app/macos/` run `swift build` + `swift test` and confirm
       the existing `BleWidgetTests` pass unchanged after the move (fix only path/package metadata in
       `keybeacon/app/macos/Package.swift`, never logic) — the move MUST NOT change behavior
       (FR-016, SC-008).
-- [ ] T005 [P] Scaffold app-repo meta: `keybeacon/.gitignore` (Swift `.build/`, bundle outputs),
+- [X] T005 [P] Scaffold app-repo meta: `keybeacon/.gitignore` (Swift `.build/`, bundle outputs),
       `keybeacon/LICENSE` (MIT, matching the protocol license), and a `keybeacon/README.md`
       placeholder header (expanded in T011).
-- [ ] T006 [P] Create the app-repo CI skeleton `keybeacon/.github/workflows/ci.yml`: on push/PR, run
+- [X] T006 [P] Create the app-repo CI skeleton `keybeacon/.github/workflows/ci.yml`: on push/PR, run
       `swift build` + `swift test` in `app/macos/` (bundle smoke + protocol lint added later by
       T012/T016).
 
@@ -93,32 +93,32 @@ iteration**, with the Gatekeeper first-open gap documented (research R5, R8; con
 → Open once, since unsigned), grant Bluetooth, and confirm live status shows; release notes declare
 version, supported KBP, and min macOS (quickstart G).
 
-- [ ] T007 [US1] Create `keybeacon/packaging/make-app.sh`: `swift build -c release`, assemble
+- [X] T007 [US1] Create `keybeacon/packaging/make-app.sh`: `swift build -c release`, assemble
       `BleWidget.app` (`Contents/MacOS/BleWidget`, `Contents/Info.plist`, `Contents/PkgInfo`
       `APPL????`), then emit `BleWidget-<ver>.zip` (`ditto -c -k --keepParent`), `BleWidget-<ver>.dmg`
       (`hdiutil create`), and `*.sha256`; runnable with only `swift` + stock macOS tools (FR-001;
       contract `release-artifact.md` §1).
-- [ ] T008 [P] [US1] Update `keybeacon/app/macos/Info.plist`: add `KBPSupportedVersions` (the
+- [X] T008 [P] [US1] Update `keybeacon/app/macos/Info.plist`: add `KBPSupportedVersions` (the
       supported service-UUID/MAJOR set, `AA440AA0-…` for KBP 1.x) and confirm `LSUIElement=true`,
       `LSMinimumSystemVersion=12.0`, `NSBluetoothAlwaysUsageDescription` (FR-003; contract
       `release-artifact.md` §4).
-- [ ] T009 [US1] Create `keybeacon/.github/workflows/release.yml`: trigger on tag `app-v*`; job order
+- [X] T009 [US1] Create `keybeacon/.github/workflows/release.yml`: trigger on tag `app-v*`; job order
       `swift build` → `swift test` → `packaging/make-app.sh` → sha256 → create GitHub Release +
       upload `.dmg`/`.zip`/`.sha256` + notes; signing/notarization steps **conditional on
       ZMK-Studio-aligned Developer ID secrets** (`APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`,
       `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`; skipped now ⇒
       `signing_state=unsigned`), and **fail-safe** (a signing/notarize failure fails the job, never
       publishes) (FR-001/FR-002; R8; contract `release-artifact.md` §2–3).
-- [ ] T010 [US1] Add a minimum-macOS runtime guard in
+- [X] T010 [US1] Add a minimum-macOS runtime guard in
       `keybeacon/app/macos/Sources/BleWidget/main.swift` (or `AppDelegate.swift`): on < macOS 12 show
       a clear message and exit cleanly rather than crash ("older/newer macOS" edge case).
-- [ ] T011 [US1] Write `keybeacon/README.md` download/run guide: find → download → open → grant
+- [X] T011 [US1] Write `keybeacon/README.md` download/run guide: find → download → open → grant
       Bluetooth with **no terminal/build** (FR-004); the unsigned **Gatekeeper first-open workaround**
       (right-click → Open; or clear quarantine), a platform note stating macOS is available now and
       **Windows/Linux are planned for the next iteration (feature 004)**, and an explicit
       statement that **SC-001/SC-002 are not met this iteration** (unsigned) and a future signed
       release removes the step (R8; contract `release-artifact.md` §5).
-- [ ] T012 [US1] Extend `keybeacon/.github/workflows/ci.yml` with a **bundle smoke** step: run
+- [X] T012 [US1] Extend `keybeacon/.github/workflows/ci.yml` with a **bundle smoke** step: run
       `packaging/make-app.sh` in CI and assert `BleWidget.app` + `.dmg` + `.zip` are produced (guards
       FR-001 on every push).
 
@@ -139,34 +139,34 @@ contracts `protocol-standard.md`, `firmware-pin.md`).
 `scripts/verify-protocol-pin.sh` in the firmware repo exits 0, failing if a byte diverges (quickstart
 A, B, C).
 
-- [ ] T013 [P] [US2] Create `keybeacon/protocol/VERSION` = `1.0.0` (matches tag `protocol-v1.0.0`;
+- [X] T013 [P] [US2] Create `keybeacon/protocol/VERSION` = `1.0.0` (matches tag `protocol-v1.0.0`;
       contract `protocol-standard.md` §2).
-- [ ] T014 [P] [US2] Create `keybeacon/protocol/CHANGELOG.md` with a `1.0.0` entry consolidating the
+- [X] T014 [P] [US2] Create `keybeacon/protocol/CHANGELOG.md` with a `1.0.0` entry consolidating the
       feature-001 snapshot contract + feature-002 discovery/identity amendment (KBP §13).
-- [ ] T015 [US2] Self-containment pass on `keybeacon/protocol/README.md`: remove/convert any
+- [X] T015 [US2] Self-containment pass on `keybeacon/protocol/README.md`: remove/convert any
       firmware-internal or app-source links and confirm it fully specifies service identity, payload
       layout, GAP-name identity, discovery, and versioning so a third party can implement from it
       alone (FR-006/FR-007; contract `protocol-standard.md` §1).
-- [ ] T016 [P] [US2] Create `keybeacon/.github/workflows/protocol.yml`: assert `protocol/VERSION` is
+- [X] T016 [P] [US2] Create `keybeacon/.github/workflows/protocol.yml`: assert `protocol/VERSION` is
       valid semver and matches the `protocol-v*` tag on release, `CHANGELOG.md` has an entry for
       `VERSION`, and a self-containment lint fails on any `../ | host/ | config/ | firmware` link in
       `protocol/README.md` (contract `protocol-standard.md` §6).
-- [ ] T017 [US2] Add an explicit **standalone-build** assertion to `keybeacon/.github/workflows/ci.yml`
+- [X] T017 [US2] Add an explicit **standalone-build** assertion to `keybeacon/.github/workflows/ci.yml`
       (or `protocol.yml`): the app-repo job uses only the app checkout (no firmware repo) and must
       succeed — documents/guards SC-003 / FR-005.
-- [ ] T018 [P] [US2] Create the firmware pin snapshot `protocol-pinned/KBP.md`: a byte-for-byte copy
+- [X] T018 [P] [US2] Create the firmware pin snapshot `protocol-pinned/KBP.md`: a byte-for-byte copy
       of `keybeacon/protocol/README.md` at the pinned tag (contract `firmware-pin.md` §1).
-- [ ] T019 [US2] Create `protocol-pinned/kbp.lock` with `kbp_version: 1.0.0`,
+- [X] T019 [US2] Create `protocol-pinned/kbp.lock` with `kbp_version: 1.0.0`,
       `source_repo: https://github.com/ykiewang/keybeacon`, `source_ref: protocol-v1.0.0`,
       `source_commit: <sha>`, `snapshot_sha256: <sha256 of protocol-pinned/KBP.md>` (contract
       `firmware-pin.md` §2).
-- [ ] T020 [US2] Create `scripts/verify-protocol-pin.sh`: **offline** recompute `sha256(KBP.md)` ==
+- [X] T020 [US2] Create `scripts/verify-protocol-pin.sh`: **offline** recompute `sha256(KBP.md)` ==
       `kbp.lock:snapshot_sha256` and `kbp_version` match; **online (when reachable)** fetch
       `protocol/README.md@source_ref` and diff vs `KBP.md`, soft-skip when offline; exit `0`/`1`/`2`
       (verified / mismatch / malformed lock) (contract `firmware-pin.md` §3; FR-008, SC-003, SC-006).
-- [ ] T021 [US2] Add a non-firmware **protocol-pin verify** job to `.github/workflows/build.yml` that
+- [X] T021 [US2] Add a non-firmware **protocol-pin verify** job to `.github/workflows/build.yml` that
       runs `scripts/verify-protocol-pin.sh` and fails CI on mismatch (FR-008, SC-006).
-- [ ] T022 [US2] Record the protocol release action: tag `protocol-v1.0.0` in the app repo (executed
+- [X] T022 [US2] Record the protocol release action: tag `protocol-v1.0.0` in the app repo (executed
       with the push, T031) and note it in `keybeacon/protocol/CHANGELOG.md` — the pinnable,
       traceable ref (contract `protocol-standard.md` §2; SC-006).
 
@@ -185,17 +185,17 @@ so an author can enumerate the required work and get per-item PASS/FAIL against 
 seeded-defect keyboard → the specific item FAILs, exit 1; with Bluetooth off/no keyboard → clear
 environment error, exit 2 (quickstart E, F).
 
-- [ ] T023 [US3] Create `keybeacon/conformance/conformance_tool.py` by evolving `tools/probe.py`:
+- [X] T023 [US3] Create `keybeacon/conformance/conformance_tool.py` by evolving `tools/probe.py`:
       discover candidates by **service UUID only** (never name/model); run each checklist item and
       print **per-item PASS/FAIL** naming the specific nonconformance; exit `0` all-pass / `1`
       conformance-failure / `2` environment-error (BT off, no keyboard, connect timeout); print the
       discovered GAP name for confirmation (FR-011/FR-012, SC-004/SC-005; contract
       `protocol-standard.md` §4).
-- [ ] T024 [P] [US3] Write `keybeacon/conformance/CONFORMANCE.md`: the complete, concrete body of
+- [X] T024 [P] [US3] Write `keybeacon/conformance/CONFORMANCE.md`: the complete, concrete body of
       work a keyboard must do — the **central BLE role prerequisite**, expose service+characteristic,
       payload ≥ 2 bytes per §4, notify-on-change suppression, GAP name — plus tool usage and exit-code
       meanings (FR-009).
-- [ ] T025 [P] [US3] Write `keybeacon/conformance/checklist.md`: each KBP §10 item as an
+- [X] T025 [P] [US3] Write `keybeacon/conformance/checklist.md`: each KBP §10 item as an
       individually verifiable line, cross-referenced to the tool's checks (FR-010).
 
 **Checkpoint**: An author can read the guide, check the list, and self-verify a keyboard; the
@@ -212,15 +212,15 @@ and shows a clear "unsupported protocol version" message for incompatible ones �
 **Independent Test**: Known service → works; a device exposing only an unknown KeyBeacon-family
 service → clear "unsupported" message; a non-KeyBeacon device → "not a keyboard" (quickstart H).
 
-- [ ] T026 [P] [US4] Add `keybeacon/app/macos/Tests/BleWidgetTests/CompatibilityTests.swift`
+- [X] T026 [P] [US4] Add `keybeacon/app/macos/Tests/BleWidgetTests/CompatibilityTests.swift`
       (write first, ensure it FAILs): the pure resolver classifies a known supported service UUID as
       *supported*, an unknown KeyBeacon-family service as *unsupported*, and a non-KeyBeacon device as
       *not-a-keyboard* (FR-013/FR-014).
-- [ ] T027 [US4] Implement the supported-KBP declaration + resolver in
+- [X] T027 [US4] Implement the supported-KBP declaration + resolver in
       `keybeacon/app/macos/Sources/BleWidgetCore/` (e.g. a `KBPCompatibility` type exposing the
       supported service-UUID set and a `classify(discoveredServices:)`); keep it pure/unit-testable
       (FR-013; the unit under test in T026).
-- [ ] T028 [US4] Wire the "unsupported protocol version" path in
+- [X] T028 [US4] Wire the "unsupported protocol version" path in
       `keybeacon/app/macos/Sources/BleWidget/AppDelegate.swift`: on an unknown KeyBeacon-family
       service show a clear, actionable message (menu bar/panel) and do not connect/parse; known
       service behaves normally (FR-014, SC-007).
@@ -235,20 +235,20 @@ unchanged.
 **Purpose**: Firmware-side cleanup to the reference-keyboard shape, the manual cross-repo push, and
 end-to-end validation.
 
-- [ ] T029 [P] Update firmware `readme.md`: point users to the app repo's **Releases** for downloads
+- [X] T029 [P] Update firmware `readme.md`: point users to the app repo's **Releases** for downloads
       and note the app/protocol/conformance kit now live in `github.com/ykiewang/keybeacon`; keep
       firmware instructions scoped to the reference keyboard.
-- [ ] T030 [P] Firmware cleanup after the split: remove the migrated app sources (`host/macos/`) from
+- [X] T030 [P] Firmware cleanup after the split: remove the migrated app sources (`host/macos/`) from
       the firmware repo, **retain** `tools/probe.py` as the developer probe, and confirm `build.yaml`
       targets still build unchanged (plan Project Structure; FR-016).
-- [ ] T031 Execute/document the manual cross-repo push (auth required): `git push -u origin main` to
+- [X] T031 Execute/document the manual cross-repo push (auth required): `git push -u origin main` to
       `github.com/ykiewang/keybeacon`, then push tags `protocol-v1.0.0` and the first `app-vX.Y.Z`;
       update `scripts/migrate/README.md` to mark the migration tooling retired after seeding
       (research R2; this is the one step not verifiable in this repo's CI).
-- [ ] T032 Run `quickstart.md` scenarios A–I end to end and record outcomes; confirm no regression vs
+- [X] T032 Run `quickstart.md` scenarios A–I end to end and record outcomes; confirm no regression vs
       the T001 baseline (reference Totem still passes conformance and shows status as in 001/002)
       (FR-016, SC-008).
-- [ ] T033 [P] Confirm the **deferred** items are stated honestly everywhere they surface: release
+- [X] T033 [P] Confirm the **deferred** items are stated honestly everywhere they surface: release
       notes template + `keybeacon/README.md` mark FR-002 / SC-001 / SC-002 as not-met-this-iteration
       (unsigned), with the signed-release follow-up noted (R8).
 
@@ -346,3 +346,24 @@ Task: "protocol-pinned/KBP.md snapshot (firmware repo)"
 - No firmware runtime/wire change; the reference Totem stays conforming with no regression (T030,
   T032; FR-016, SC-008).
 - Commit after each task or logical group; stop at any checkpoint to validate a story independently.
+
+---
+
+## Implementation status (as-built)
+
+All 33 tasks implemented. Validation evidence:
+
+- **App repo `github.com/ykiewang/keybeacon`**: pushed `main` + tags `protocol-v1.0.0`, `app-v0.1.0`.
+  CI all **green**: `ci` (build + 29 tests + bundle smoke + standalone assertion), `protocol`
+  (semver/tag/CHANGELOG/self-containment governance), `release` (published the GitHub Release with
+  `BleWidget-0.1.0.dmg`/`.zip`/`.sha256` and honest-gap notes — `signing_state=unsigned`,
+  SC-001/SC-002/FR-002 marked NOT met this iteration).
+- **Firmware pin**: `verify-protocol-pin.sh` passes **offline + online** (KBP.md byte-identical to
+  `protocol/README.md@protocol-v1.0.0`); a one-byte tamper exits non-zero. Wired as a non-firmware
+  job in `build.yml`. The firmware commit is local (keybeacon was the authorized push).
+- **History-preserving split**: feature-001/002 commits (`2fe1aae`, `2b933ba`, `80fd7f9`) are
+  ancestors of the app repo HEAD.
+- **Quickstart A–I**: A/B/C/D/I validated by machine (above). **E/F/G/H need physical hardware / a
+  clean Mac / PyObjC** (a conforming + a seeded-defect keyboard, an unknown KeyBeacon-family device,
+  a clean-Mac download) and remain **manual**; the version-skew logic is covered by
+  `CompatibilityTests` (green) and the Gatekeeper gap is validated via the live release notes (G).

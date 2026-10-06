@@ -38,7 +38,10 @@ Expected:
 ```bash
 cd keybeacon
 cat protocol/VERSION                 # e.g. 1.0.0
-grep -nE '\.\./|host/|config/|firmware' protocol/README.md || echo "no internal links — OK"
+# self-containment: reject links into firmware/app internals (not the mere word
+# "firmware", which legitimately names the producer role in prose):
+grep -nE '\]\(\.\./|\]\(/?(host|config)/|zmk-config-totem|app/macos' protocol/README.md \
+  || echo "no internal links — OK"
 git tag --list 'protocol-v*'         # protocol tags disjoint from app-v* tags
 ```
 

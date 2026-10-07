@@ -21,7 +21,7 @@ description: "Task list for ZMK Module Distribution"
 
 ## Path Conventions
 
-- **Firmware repo** (this repo, `zmk-config-totem`): `config/`, `scripts/`, `west.yml`, `readme.md` at repository root
+- **Firmware repo** (this repo, `zmk-config-totem`): `config/` (incl. the ZMK manifest at `config/west.yml`), `scripts/`, `readme.md` at repository root
 - **Module repo content** (destined for `github.com/ykiewang/zmk-keybeacon`): authored in place under `config/keybeacon_kit/` and carried out by the migration split
 
 ---
@@ -83,13 +83,13 @@ description: "Task list for ZMK Module Distribution"
 
 **Independent Test**: With `config/keybeacon_kit/` removed and Totem wired to the module via `west.yml`, `totem_left`/`totem_right` build and on-device probe output matches pre-migration — matching quickstart.md Scenarios B, C, E.
 
-- [ ] T012 [US3] Create firmware `west.yml` at the repo root: `zmk` with `import: app/west.yml`, `zmk-keybeacon` pinned to tag `v1.0.0`, `self: path: config` (per contracts §2.1). Pre-publish validation uses the canonical `ZEPHYR_EXTRA_MODULES` mechanism from T008 — do **not** introduce a second local-path mechanism here; the `west.yml` `revision` resolves to the real tag once the module repo is published (T017)
-- [ ] T013 [US3] Remove the line `include(${CMAKE_CURRENT_LIST_DIR}/../../../keybeacon_kit/keybeacon.cmake)` from `config/boards/shields/totem/CMakeLists.txt` (file becomes comment-only or is deleted) — MUST run after T012 so the module provides the source (per research.md R2/R6)
-- [ ] T014 [US3] Remove the line `rsource "../../../keybeacon_kit/Kconfig.keybeacon"` from `config/boards/shields/totem/Kconfig.defconfig` — MUST run after T012 (per research.md R2/R6)
+- [X] T012 [US3] Edit the firmware `config/west.yml` (ZMK convention — Totem already ships one): add the `ykiewang` remote and append the `zmk-keybeacon` project pinned to tag `v1.0.0`, keeping `zmk` with `import: app/west.yml` and `self: path: config` (per contracts §2.1). Pre-publish validation uses the canonical `ZEPHYR_EXTRA_MODULES` mechanism from T008 — do **not** introduce a second local-path mechanism here; the `revision` now resolves to the published tag (T017)
+- [X] T013 [US3] Remove the line `include(${CMAKE_CURRENT_LIST_DIR}/../../../keybeacon_kit/keybeacon.cmake)` from `config/boards/shields/totem/CMakeLists.txt` (file becomes comment-only or is deleted) — MUST run after T012 so the module provides the source (per research.md R2/R6)
+- [X] T014 [US3] Remove the line `rsource "../../../keybeacon_kit/Kconfig.keybeacon"` from `config/boards/shields/totem/Kconfig.defconfig` — MUST run after T012 (per research.md R2/R6)
 - [X] T015 [US3] Finalize `config/keybeacon_kit/README.md` as the module-level integration guide: **remove the copy-based porting steps table (the 1–5 steps using `include()`/`rsource`)** and replace with the west-module flow (`west.yml` + `.conf`) so no copy/include/rsource wording remains — this file is carried into the module repo by the split
 - [X] T016 [US3] Create `scripts/migrate/split-keybeacon-module.sh` that subtree-splits `config/keybeacon_kit/` into the `zmk-keybeacon` module repo tree (preserving `keybeacon.c` history, re-rooting kit files to the module root) (mirrors feature 003's history-preserving split in research.md R4)
 - [X] T017 [P] [US3] Create `scripts/migrate/README.md` documenting the manual, non-CI-verifiable steps: create `github.com/ykiewang/zmk-keybeacon`, push the split tree, tag `v1.0.0` (maintainer action requiring GitHub auth)
-- [ ] T018 [US3] Remove `config/keybeacon_kit/` from the firmware repo after the split (content now lives in the module repo and is fetched via `west`) — destructive; MUST run after T008 and T011 if sharing one workspace
+- [X] T018 [US3] Remove `config/keybeacon_kit/` from the firmware repo after the split (content now lives in the module repo and is fetched via `west`) — destructive; MUST run after T008 and T011 if sharing one workspace
 - [X] T019 [P] [US3] Update firmware `readme.md` to point users to the `zmk-keybeacon` module and the Releases/tags for versions (replace any in-repo `keybeacon_kit` references)
 - [ ] T020 [US3] Validate quickstart.md Scenarios B, C, E: `totem_left`/`totem_right` build via the module; on-device `probe.py` output matches the pre-migration baseline; peripheral and `settings_reset` exclude `keybeacon.c`. If the keybeacon app repo's conformance tool is available, run it for a per-item cross-check (SC-003); otherwise record conformance-tool verification as deferred
 

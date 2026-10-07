@@ -53,7 +53,7 @@ endif()
 
 ## 2. 用户侧接入契约
 
-### 2.1 `west.yml` 最小声明
+### 2.1 `config/west.yml` 最小声明
 
 ```yaml
 manifest:
@@ -75,8 +75,9 @@ manifest:
 ```
 
 **约束**:
+- 该 manifest 位于 zmk-config 的 `config/west.yml`（ZMK 约定），不是仓库根目录。
 - `revision` 字段 MUST 固定为具体 tag（如 `v1.0.0`），不得使用 `main` 跟踪分支。
-- 若用户已有 `west.yml`（接入了其他第三方模块），仅需在 `projects` 列表追加 `zmk-keybeacon` 一项。
+- 若用户已有 `config/west.yml`（接入了其他第三方模块，或 ZMK 模板自带），仅需在 `projects` 列表追加 `zmk-keybeacon` 一项。
 
 ### 2.2 `.conf` 激活契约
 

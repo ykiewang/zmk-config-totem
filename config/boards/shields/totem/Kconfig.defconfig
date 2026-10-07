@@ -17,5 +17,3 @@ config ZMK_SPLIT
     default y
 
 endif
-
-rsource "../../../keybeacon_kit/Kconfig.keybeacon"

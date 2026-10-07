@@ -23,7 +23,7 @@ ls config/keybeacon_kit  # 应报"No such file"
 
 **接入步骤**（用户侧操作，仅两处）:
 
-1. 在仓库根目录创建 `west.yml`（参见 [contracts/module-interface.md](../contracts/module-interface.md) 第 2.1 节的最小声明）。
+1. 在 `config/west.yml` 中声明（ZMK 约定 manifest 位于 config/ 下，已存在则追加 zmk-keybeacon 条目；参见 [contracts/module-interface.md](../contracts/module-interface.md) 第 2.1 节的最小声明）。
 2. 在 central shield 的 `.conf` 中添加 `CONFIG_ZMK_KEYBEACON=y`。
 
 **构建**:

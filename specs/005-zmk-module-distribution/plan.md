@@ -14,7 +14,7 @@ Extract `config/keybeacon_kit/` from the zmk-config-totem firmware repo into a s
 
 **Primary Dependencies**: Zephyr module system (native to ZMK build environment, no new tooling); west (already required by all ZMK users); GitHub Actions (ZMK's existing CI template already supports west manifests with external projects).
 
-**Storage**: N/A — no runtime storage. The module repo contains only firmware source files and module metadata. The firmware repo gains a `west.yml` that pins the module by semver tag.
+**Storage**: N/A — no runtime storage. The module repo contains only firmware source files and module metadata. The firmware repo pins the module by adding a `zmk-keybeacon` entry (semver tag) to its `config/west.yml`.
 
 **Testing**: Firmware build CI (`build.yaml`) is the primary gate — the module must compile cleanly for all existing Totem targets. On-device: existing `probe.py` and conformance tool validate runtime behavior is unchanged.
 
@@ -32,7 +32,7 @@ Extract `config/keybeacon_kit/` from the zmk-config-totem firmware repo into a s
 - Totem shield files that reference `keybeacon_kit/` paths (CMakeLists.txt, Kconfig.defconfig) MUST have those `include()`/`rsource` lines **removed** — the module auto-injects cmake and Kconfig via `zephyr/module.yml`; no path re-pointing is needed.
 - ZMK's GitHub Actions CI must continue to pass for all `build.yaml` targets.
 
-**Scale/Scope**: One module repo (3 source files + module metadata), one firmware repo update (path update in 2 shield files + `west.yml` creation), one documentation update (`GETTING-STARTED.md`).
+**Scale/Scope**: One module repo (3 source files + module metadata), one firmware repo update (remove wiring in 2 shield files + `config/west.yml` edit), one documentation update (`GETTING-STARTED.md`).
 
 ## Constitution Check
 
@@ -87,19 +87,17 @@ zmk-keybeacon/
 ```text
 zmk-config-totem/
 ├── config/
-│   ├── keybeacon_kit/          # UPDATED in place (docs) → SPLIT to module repo → then REMOVED
-│   │   ├── README.md           # UPDATED → carried into module repo by the split
-│   │   └── GETTING-STARTED.md  # UPDATED → carried into module repo by the split
+│   ├── west.yml                # EDITED: append the zmk-keybeacon project (ZMK manifest lives in config/)
+│   ├── keybeacon_kit/          # SPLIT to module repo (history preserved) → then REMOVED from this repo
 │   └── boards/shields/totem/
-│       ├── CMakeLists.txt      # EDITED: remove the include() line (module auto-injects cmake)
+│       ├── CMakeLists.txt      # REMOVED: include() no longer needed (module auto-injects cmake)
 │       └── Kconfig.defconfig   # EDITED: remove the rsource line (module auto-injects Kconfig)
-├── west.yml                    # NEW: west manifest declaring the zmk-keybeacon module
 └── scripts/migrate/
-    ├── split-keybeacon-module.sh   # NEW: history-preserving split → module repo tree
-    └── README.md                   # NEW: manual push/tag steps (maintainer action)
+    ├── split-keybeacon-module.sh    # NEW: history-preserving split → module repo tree
+    └── README-keybeacon-module.md   # NEW: manual push/tag steps (maintainer action)
 ```
 
-**Structure Decision**: The module repo is the authoritative source for the three kit files. The firmware repo gains a `west.yml` that pins the module by tag and removes the in-repo `keybeacon_kit/` copy (after the docs are updated in place and split out, preserving history). Totem shield wiring has its `include()` line (`CMakeLists.txt`) and `rsource` line (`Kconfig.defconfig`) **removed entirely** — the module auto-injects cmake and Kconfig via `zephyr/module.yml`, so no path re-pointing is needed. `GETTING-STARTED.md` is updated so step 1 becomes "add to `west.yml`" rather than "copy directory".
+**Structure Decision**: The module repo is the authoritative source for the kit files. The firmware repo appends a `zmk-keybeacon` entry to its `config/west.yml` (ZMK's manifest lives in `config/`, pinned by tag) and removes the in-repo `keybeacon_kit/` copy (after it is split out, preserving history). Totem shield wiring has its `include()` line (`CMakeLists.txt`, removed since the file is no longer needed) and `rsource` line (`Kconfig.defconfig`) **removed entirely** — the module auto-injects cmake and Kconfig via `zephyr/module.yml`, so no path re-pointing is needed. `GETTING-STARTED.md` is updated so step 1 becomes "add to `config/west.yml`" rather than "copy directory".
 
 ## Complexity Tracking
 

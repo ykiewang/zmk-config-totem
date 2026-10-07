@@ -22,7 +22,7 @@
 
 | 字段 | 值/说明 |
 |------|---------|
-| 位置 | zmk-config 仓库根目录（`west.yml`） |
+| 位置 | zmk-config 的 `config/west.yml`（ZMK 约定 manifest 位于 config/ 下） |
 | 必要声明 | `zmk` project（含 `import: app/west.yml`）+ `zmk-keybeacon` project |
 | 版本锁定 | `revision: v1.0.0`（固定 tag，不跟踪 `main`） |
 | 所有者 | 各用户的 zmk-config 仓库自行维护 |

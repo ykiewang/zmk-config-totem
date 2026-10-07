@@ -35,7 +35,7 @@ build:
 
 ## R3. west.yml 的结构与 ZMK GitHub Actions 兼容性
 
-- **Decision**: 用户在 zmk-config 根目录创建 `west.yml`，同时声明 ZMK 本体依赖和 zmk-keybeacon 模块。ZMK 的 GitHub Actions CI 原生支持此方式，已有社区模块（如 `zmk-tri-state`）验证。最小结构：
+- **Decision**: 用户在 zmk-config 的 `config/west.yml`（ZMK 约定 manifest 位于 `config/` 下，通常已存在）中声明 ZMK 本体依赖和 zmk-keybeacon 模块。ZMK 的 GitHub Actions CI 原生支持此方式，已有社区模块（如 `zmk-tri-state`）验证。最小结构：
 
 ```yaml
 manifest:

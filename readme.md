@@ -50,11 +50,10 @@ multi-keyboard decoupling.
 - Enabled by `CONFIG_ZMK_KEYBEACON` (already set in
   [`config/totem.conf`](/config/totem.conf)); compiled on the **central (left) role
   only** and gated on BLE, so the right half and `settings_reset` are unaffected.
-- The shared logic ships as a portable **KeyBeacon kit**
-  ([`config/keybeacon_kit/`](/config/keybeacon_kit)); it is being packaged as a standalone
-  Zephyr module (`zmk-keybeacon`) so any keyboard can consume it with a single `west.yml`
-  entry and no file copying — see
-  [`config/keybeacon_kit/GETTING-STARTED.md`](/config/keybeacon_kit/GETTING-STARTED.md).
+- The shared logic ships as a standalone Zephyr module,
+  **[zmk-keybeacon](https://github.com/ykiewang/zmk-keybeacon)**, so any keyboard can consume it
+  with a single `config/west.yml` entry and no file copying — see the module's `GETTING-STARTED.md`
+  for onboarding. Totem itself pins it in [`config/west.yml`](/config/west.yml).
 - Publishes a notify-on-change snapshot `[layer_index][modifiers][layer_name]`.
   Nothing is sent while the state is unchanged, so there is no idle traffic.
 - Build and flash it exactly as above — the feature rides along in
@@ -107,10 +106,9 @@ tools/.venv/bin/python tools/probe.py
 - 由 `CONFIG_ZMK_KEYBEACON` 开关控制(已在
   [`config/totem.conf`](/config/totem.conf) 中启用);**仅在中央(左)角色**编译并依赖
   BLE,因此右半与 `settings_reset` 不受影响。
-- 共享逻辑以可移植的 **KeyBeacon 套件**([`config/keybeacon_kit/`](/config/keybeacon_kit))
-  形式提供;正打包为独立 Zephyr 模块(`zmk-keybeacon`),任意键盘只需一条 `west.yml` 条目、
-  无需复制文件即可接入——见
-  [`config/keybeacon_kit/GETTING-STARTED.md`](/config/keybeacon_kit/GETTING-STARTED.md)。
+- 共享逻辑以独立 Zephyr 模块 **[zmk-keybeacon](https://github.com/ykiewang/zmk-keybeacon)**
+  形式提供,任意键盘只需一条 `config/west.yml` 条目、无需复制文件即可接入——接入指南见模块的
+  `GETTING-STARTED.md`。Totem 自身在 [`config/west.yml`](/config/west.yml) 中固定该模块。
 - 推送「仅变化才通知」的快照 `[层索引][修饰位][层名]`;状态不变时不发送,无空闲流量。
 - 构建与烧录方式同上 —— 该特性随 `totem_left` 一起编入。
 

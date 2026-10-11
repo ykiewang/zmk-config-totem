@@ -6,7 +6,7 @@
 
 ## Summary
 
-Enable zmk-keybeacon on the Totem split keyboard so the central (left) half reports its active layer name, layer index, and modifier state over its host BLE connection, consumable by a macOS companion app or BLE probe. The integration is deliberately minimal: declare the `zmk-keybeacon` module in `config/west.yml` (adding the `ykiewang` remote + project, tracked at `main` per explicit user request) and enable `CONFIG_ZMK_KEYBEACON=y` in the central half's conf (`config/boards/shields/totem/totem_left.conf`). The module auto-registers its CMake/Kconfig via `zephyr/module.yml`, and an internal cmake guard (`CONFIG_ZMK_KEYBEACON AND CONFIG_ZMK_BLE AND CONFIG_ZMK_SPLIT_ROLE_CENTRAL`) compiles the feature out of the peripheral (right) and settings_reset targets automatically. No module source edits, no shield CMakeLists/Kconfig edits, and no keymap changes are required (Totem's layers already carry labels).
+Enable zmk-keybeacon on the Totem split keyboard so the central (left) half reports its active layer name, layer index, and modifier state over its host BLE connection, consumable by a macOS companion app or BLE probe. The integration is deliberately minimal: declare the `zmk-keybeacon` module in `config/west.yml` (adding the `ykiewang` remote + project, pinned at the latest released tag `v1.1.3`) and enable `CONFIG_ZMK_KEYBEACON=y` in the central half's conf (`config/boards/shields/totem/totem_left.conf`). The module auto-registers its CMake/Kconfig via `zephyr/module.yml`, and an internal cmake guard (`CONFIG_ZMK_KEYBEACON AND CONFIG_ZMK_BLE AND CONFIG_ZMK_SPLIT_ROLE_CENTRAL`) compiles the feature out of the peripheral (right) and settings_reset targets automatically. No module source edits, no shield CMakeLists/Kconfig edits, and no keymap changes are required (Totem's layers already carry labels).
 
 ## Technical Context
 
@@ -43,11 +43,11 @@ The project constitution (`.specify/memory/constitution.md`) is an unpopulated t
 | Principle (implied) | Status | Notes |
 |---------------------|--------|-------|
 | Minimal footprint / simplicity | PASS | Two-file change; one west entry + one Kconfig symbol, exactly as the upstream guide intends. |
-| Reproducibility | DEVIATION (justified) | Tracking the module at `main` instead of a pinned tag reduces build reproducibility. Explicitly requested by the user; recorded in spec FR-002 and Complexity Tracking below. |
+| Reproducibility | PASS | Module pinned to released tag `v1.1.3` (upstream-recommended), so builds are reproducible. Updatable via a one-line `revision:` change (FR-011). |
 | No invasive changes to upstream/vendored code | PASS | Module source untouched; integration is manifest + conf only. |
 | Preserve existing behavior | PASS | Existing ZMK dependency, build targets, and CI flow unchanged. |
 
-**Gate result**: PASS (one justified deviation, tracked). No blocking violations. Re-evaluated after Phase 1 — still PASS.
+**Gate result**: PASS. No blocking violations. The only tracked item (Complexity Tracking) is disabling two out-of-scope KBP 1.1 sub-options to build against current ZMK. Re-evaluated after Phase 1 — still PASS.
 
 ## Project Structure
 
@@ -74,7 +74,7 @@ This is a ZMK user-config repository, not a src/tests application. The relevant 
 
 ```text
 config/
-├── west.yml                              # CHANGE: add ykiewang remote + zmk-keybeacon project (revision: main)
+├── west.yml                              # CHANGE: add ykiewang remote + zmk-keybeacon project (revision: v1.1.3)
 ├── totem.conf                            # unchanged (applies to all totem targets)
 ├── totem.keymap                          # unchanged (layers already labeled BASE/NAVI/SYM/ADJ)
 └── boards/
@@ -97,4 +97,6 @@ build.yaml                                # unchanged (left / right / settings_r
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| Module revision pinned to `main` instead of a released tag (`v1.0.0`) | User explicitly requested pulling the latest from `main` (spec FR-002). | Pinning a tag (the upstream-recommended, more reproducible option) was rejected only because it contradicts the explicit user instruction. Mitigation: `west.yml` keeps a single-line revision that can later be changed to a tag with no other edits (FR-011). |
+| Disable KBP 1.1 sub-options (`CONNECTIVITY`/`BATTERY`) on the central conf | The module's Connectivity path calls `zmk_endpoints_selected()`, removed from ZMK `main` (the `zmk` project tracks `main`); it fails to compile at any 1.1 tag incl. v1.1.3. | Enabling them was rejected — guaranteed build failure against current ZMK. Both are out of scope (core layer/modifier reporting is unaffected). |
+
+> Reproducibility note: the module is pinned to the released tag `v1.1.3`, so builds are reproducible (the upstream-recommended approach). Updating is a one-line `revision:` change.

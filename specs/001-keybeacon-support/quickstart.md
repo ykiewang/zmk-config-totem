@@ -14,7 +14,7 @@ This guide validates the feature end-to-end. It references [data-model.md](./dat
 
 ## The two changes under test
 
-1. `config/west.yml` — add `ykiewang` remote + `zmk-keybeacon` project (`revision: main`). See data-model "Module Dependency Entry".
+1. `config/west.yml` — add `ykiewang` remote + `zmk-keybeacon` project (`revision: v1.1.3`). See data-model "Module Dependency Entry".
 2. `config/boards/shields/totem/totem_left.conf` — add `CONFIG_ZMK_KEYBEACON=y`. See data-model "Central Target Configuration".
 
 ## Step 1 — Build (satisfies contracts/build-artifacts.md)
@@ -62,9 +62,9 @@ west build -d build/right -b xiao_ble//zmk -- -DSHIELD=totem_right
 - [ ] Device discovered among connected peripherals, not by scanning (K5)
 - [ ] No KeyBeacon output from right/settings_reset (K6 / SC-003)
 
-## Step 4 — (Optional) Confirm the `main` tracking tradeoff
+## Step 4 — (Optional) Change the pinned module version (FR-011)
 
-- Re-running `west update` later can pull newer `zmk-keybeacon` commits from `main` (reproducibility tradeoff, plan Complexity Tracking). To pin for reproducibility, change the single `revision: main` line in `config/west.yml` to a released tag (e.g. `v1.0.0`) and re-run `west update && west build` — no other edits (FR-011).
+- The module is pinned at `revision: v1.1.3`, so `west update` fetches identical code every time (reproducible). To move to a newer release, change the single `revision:` line in `config/west.yml` to the new tag and re-run `west update && west build` — no other edits.
 
 ## Success = all acceptance checks above pass
 

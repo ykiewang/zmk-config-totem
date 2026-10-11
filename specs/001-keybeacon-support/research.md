@@ -6,7 +6,7 @@ All technical unknowns from the plan's Technical Context are resolved below. Sou
 
 ## R1. Module dependency declaration (west.yml)
 
-- **Decision**: Add the `ykiewang` remote and a `zmk-keybeacon` project entry to the existing `config/west.yml`, leaving the `zmkfirmware`/`zmk` project and `self` untouched. Set `revision: main`.
+- **Decision**: Add the `ykiewang` remote and a `zmk-keybeacon` project entry to the existing `config/west.yml`, leaving the `zmkfirmware`/`zmk` project and `self` untouched. Set `revision: v1.1.3`.
 - **Rationale**: Totem already has a manifest (Scenario B in the guide — "additions only"). The module's `zephyr/module.yml` auto-registers its CMake/Kconfig, so only a remote + project entry is required. `import: app/west.yml` on the `zmk` project already pulls in all transitive Zephyr/ZMK dependencies.
 - **Resulting manifest**:
   ```yaml
@@ -23,20 +23,20 @@ All technical unknowns from the plan's Technical Context are resolved below. Sou
         import: app/west.yml
       - name: zmk-keybeacon
         remote: ykiewang
-        revision: main
+        revision: v1.1.3
     self:
       path: config
   ```
 - **Alternatives considered**:
-  - *Pin to `v1.0.0`* (guide's recommendation for reproducibility) — rejected per explicit user request to track `main`.
+  - *Track `main`* — rejected; a moving branch reduces reproducibility. Pinning the latest tag is the upstream-recommended approach.
   - *Vendor/copy the module into the repo* — rejected; the guide explicitly says no files are copied and west fetches the module.
 
-## R2. Revision `main` vs pinned tag — availability and tradeoff
+## R2. Revision `v1.1.3` (latest tag) vs moving branch — choice and tradeoff
 
-- **Decision**: Use `revision: main`.
-- **Rationale**: The `main` branch exists and is the module's default branch (confirmed via the repo tree at `main`, which contains `Kconfig.keybeacon`, `keybeacon.c`, `keybeacon.cmake`, `CMakeLists.txt`, `zephyr/module.yml`). The user explicitly asked to "pull the latest from main."
-- **Tradeoff / risk**: The guide calls pinning a released semver tag a "critical rule … never `main`" for reproducible builds. Tracking `main` means a future `west update` can fetch changed module code, so two builds from the same config can differ. Accepted and documented (spec FR-002, plan Complexity Tracking). Easily reversible: change one `revision:` line to a tag later (FR-011).
-- **Alternatives considered**: `v1.0.0` tag (reproducible) — rejected only because it contradicts the instruction.
+- **Decision**: Use `revision: v1.1.3` (the newest released tag).
+- **Rationale**: Pinning a released tag gives reproducible builds (two `west update`s fetch identical module code). `v1.1.3` is the latest tag; the module repo confirms tags `v1.0.0..v1.1.3`.
+- **Tradeoff / risk**: Moving to a newer module release later requires a one-line `revision:` bump (FR-011). This is the opposite tradeoff from tracking `main`: reproducibility over always-latest.
+- **Alternatives considered**: `revision: main` (always latest, less reproducible) — rejected; `v1.0.0` (predates the 1.1 Connectivity bug but is old) — unnecessary since disabling the 1.1 sub-options (R9) lets the latest tag build clean.
 
 ## R3. Enabling symbol and placement (central-only)
 
@@ -78,11 +78,11 @@ All technical unknowns from the plan's Technical Context are resolved below. Sou
 
 ## R9. Module `main` compatibility with ZMK `main` (implementation finding)
 
-- **Decision**: Keep `revision: main` (R2) but disable the KBP 1.1 sub-options `CONFIG_ZMK_KEYBEACON_CONNECTIVITY` and `CONFIG_ZMK_KEYBEACON_BATTERY` (both default `y` upstream) in the central conf.
-- **Rationale**: CI evidence (a prior `feat/keybeacon-v1.1.3` run) and inspection of the module at `main` (HEAD `76378f42`) show `keybeacon.c:249` calls `zmk_endpoints_selected()`, which was removed from ZMK `main` (renamed `zmk_endpoint_get_selected()`), causing `error: invalid initializer`. That call is the **only** occurrence and is wrapped entirely in `#if IS_ENABLED(CONFIG_ZMK_KEYBEACON_CONNECTIVITY)` (lines 187–279). The core layer/modifier path (`build_payload`, `keybeacon_cb`) does not use it. Disabling the two 1.1 sub-options compiles out the broken/out-of-scope code while preserving the feature required by FR-006.
+- **Decision**: Keep the pinned tag `revision: v1.1.3` (R2) but disable the KBP 1.1 sub-options `CONFIG_ZMK_KEYBEACON_CONNECTIVITY` and `CONFIG_ZMK_KEYBEACON_BATTERY` (both default `y` upstream) in the central conf.
+- **Rationale**: CI evidence (a prior `feat/keybeacon-v1.1.3` run) and inspection of the module (the same call exists on `main` HEAD `76378f42` and in every 1.1 tag incl. v1.1.3) show `keybeacon.c` calls `zmk_endpoints_selected()`, which was removed from ZMK (the `zmk` project tracks `main`; renamed `zmk_endpoint_get_selected()`), causing `error: invalid initializer`. That call is the **only** occurrence and is wrapped entirely in `#if IS_ENABLED(CONFIG_ZMK_KEYBEACON_CONNECTIVITY)`. The core layer/modifier path (`build_payload`, `keybeacon_cb`) does not use it. Disabling the two 1.1 sub-options compiles out the broken/out-of-scope code while preserving the feature required by FR-006.
 - **Scope impact**: None against this spec — US1 only requires active layer name, layer index, and modifier state, all delivered by the core characteristic. Connectivity/battery characteristics were never in scope.
 - **Alternatives considered**:
-  - *Pin `revision: v1.0.0`* (predates the Connectivity feature, builds clean) — rejected because it contradicts the explicit `main` request; disabling the sub-options achieves a green `main` build without pinning.
+  - *Pin `revision: v1.0.0`* (predates the Connectivity feature, builds clean) — rejected because v1.0.0 is not the latest; disabling the sub-options lets the latest tag v1.1.3 build clean while keeping newer fixes.
   - *Patch the module* — rejected; violates FR-008 (no module source edits) and the upstream fix is not ours to make here.
   - *Leave sub-options at default `y`* — rejected; guaranteed build failure against ZMK `main`.
 
@@ -91,7 +91,7 @@ All technical unknowns from the plan's Technical Context are resolved below. Sou
 | Item | Resolution |
 |------|-----------|
 | Where to declare the module | `config/west.yml` (ykiewang remote + zmk-keybeacon project) |
-| Revision | `main` (explicit request; reproducibility tradeoff documented) |
+| Revision | `v1.1.3` (latest released tag; reproducible builds) |
 | Enable symbol | `CONFIG_ZMK_KEYBEACON=y` |
 | Where to enable | `config/boards/shields/totem/totem_left.conf` (central) |
 | Central-only scoping | Module cmake guard; no shield edits |

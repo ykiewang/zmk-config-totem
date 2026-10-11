@@ -26,9 +26,9 @@ layer and mods.
 - Enabled on the central half only via `CONFIG_ZMK_KEYBEACON=y` in
   `config/boards/shields/totem/totem_left.conf`; the right half and `settings_reset`
   compile it out automatically.
-- The module is tracked at `revision: main` in `config/west.yml`. To pin a specific
-  release for reproducible builds, change that single `revision:` line to a tag
-  (e.g. `v1.0.0`) and let the build run again.
+- The module is pinned at `revision: v1.1.3` in `config/west.yml` for reproducible
+  builds. To move to a newer release, change that single `revision:` line to the new
+  tag and let the build run again.
 - The KBP 1.1 `CONNECTIVITY`/`BATTERY` sub-characteristics are intentionally disabled
   (they are out of scope and the Connectivity path does not build against ZMK `main`).
 

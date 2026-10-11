@@ -11,7 +11,7 @@ This defines what a successful build must produce after the integration. It is t
 
 ## Preconditions
 
-- `config/west.yml` declares the `zmk-keybeacon` project (remote `ykiewang`, `revision: main`).
+- `config/west.yml` declares the `zmk-keybeacon` project (remote `ykiewang`, `revision: v1.1.3`).
 - `config/boards/shields/totem/totem_left.conf` contains `CONFIG_ZMK_KEYBEACON=y`.
 - `west update` has fetched both `zmk` and `zmk-keybeacon`.
 

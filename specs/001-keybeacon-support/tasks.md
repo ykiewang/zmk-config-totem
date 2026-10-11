@@ -11,7 +11,7 @@ description: "Task list for Totem KeyBeacon Support"
 
 **Tests**: No automated test suite is requested — this is a ZMK user-config change (West manifest + Kconfig). Verification is done via build-log inspection and a runtime BLE probe/app, mapped to the acceptance scenarios in the contracts. These verification tasks are included inline, not as TDD test tasks.
 
-> **Implementation adjustment (2026-10-11)**: Prior CI showed that module `main` (≥ v1.1.0) fails to compile against ZMK `main` because the KBP 1.1 **Connectivity** path calls the removed `zmk_endpoints_selected()` (`keybeacon.c:249`, guarded by `CONFIG_ZMK_KEYBEACON_CONNECTIVITY`, default `y`). To honor the explicit `revision: main` request while keeping the build green, T006 also sets `CONFIG_ZMK_KEYBEACON_CONNECTIVITY=n` and `CONFIG_ZMK_KEYBEACON_BATTERY=n` (both out of scope here). The core characteristic (layer name + index + modifier state, FR-006) is unaffected. See research.md R2/R9.
+> **Implementation adjustment (2026-10-11)**: Prior CI showed that zmk-keybeacon ≥ v1.1.0 (incl. the pinned `v1.1.3`) fails to compile against ZMK `main` because the KBP 1.1 **Connectivity** path calls the removed `zmk_endpoints_selected()` (`keybeacon.c:249`, guarded by `CONFIG_ZMK_KEYBEACON_CONNECTIVITY`, default `y`). T006 sets `CONFIG_ZMK_KEYBEACON_CONNECTIVITY=n` and `CONFIG_ZMK_KEYBEACON_BATTERY=n` (both out of scope here) so the pinned tag builds green. The core characteristic (layer name + index + modifier state, FR-006) is unaffected. See research.md R2/R9.
 
 **Organization**: Tasks are grouped by user story (from spec.md) so each story can be implemented and validated as an independent increment.
 
@@ -45,7 +45,7 @@ This is a **ZMK user-config repository** (not a src/tests application). Paths ar
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T004 Add the module to the manifest in `config/west.yml`: add remote `ykiewang` (`url-base: https://github.com/ykiewang`) and project `zmk-keybeacon` (`remote: ykiewang`, `revision: main`, NO `import:`). The existing `zmk` project (`remote: zmkfirmware`, `revision: main`, `import: app/west.yml`) and `self: { path: config }` MUST remain unchanged (data-model "Module Dependency Entry"; FR-001, FR-002, FR-003).
+- [X] T004 Add the module to the manifest in `config/west.yml`: add remote `ykiewang` (`url-base: https://github.com/ykiewang`) and project `zmk-keybeacon` (`remote: ykiewang`, `revision: v1.1.3`, NO `import:`). The existing `zmk` project (`remote: zmkfirmware`, `revision: main`, `import: app/west.yml`) and `self: { path: config }` MUST remain unchanged (data-model "Module Dependency Entry"; FR-001, FR-002, FR-003).
 - [X] T005 Fetch the module: run `west update` locally (or rely on the CI step that runs it) and confirm `zmk-keybeacon` resolves at branch `main`. Keep YAML valid so `west update` parses (SC-002). → Delegated to CI (`west update` runs inside the GitHub Actions build; no local build per user instruction).
 
 **Checkpoint**: Module declared and fetched — user stories can begin.
@@ -60,7 +60,7 @@ This is a **ZMK user-config repository** (not a src/tests application). Paths ar
 
 ### Implementation for User Story 1
 
-- [X] T006 [US1] Enable the feature on the central target: add `CONFIG_ZMK_KEYBEACON=y` to `config/boards/shields/totem/totem_left.conf` (central half's conf ONLY). Do NOT add it to `config/boards/shields/totem/totem_right.conf` or `config/totem.conf` (data-model "Central Target Configuration"; FR-004; research R3). **Adjusted**: also set `CONFIG_ZMK_KEYBEACON_CONNECTIVITY=n` and `CONFIG_ZMK_KEYBEACON_BATTERY=n` to keep `revision: main` building (see adjustment note above).
+- [X] T006 [US1] Enable the feature on the central target: add `CONFIG_ZMK_KEYBEACON=y` to `config/boards/shields/totem/totem_left.conf` (central half's conf ONLY). Do NOT add it to `config/boards/shields/totem/totem_right.conf` or `config/totem.conf` (data-model "Central Target Configuration"; FR-004; research R3). **Adjusted**: also set `CONFIG_ZMK_KEYBEACON_CONNECTIVITY=n` and `CONFIG_ZMK_KEYBEACON_BATTERY=n` so the pinned v1.1.3 builds (see adjustment note above).
 - [X] T007 [US1] Build the central firmware and confirm success — GitHub Actions artifact, or local `west build -d build/left -b xiao_ble//zmk -- -DSHIELD=totem_left`.
 - [ ] T008 [US1] Flash the keyboard: double-tap reset on the left half and drag the `totem_left …-zmk.uf2`; repeat for the right half with `totem_right …-zmk.uf2`; then connect the keyboard to the Mac over BLE.
 - [ ] T009 [US1] Verify runtime reporting (contracts/keybeacon-report.md) with the `BleWidget` app or a locally-written `bleak` probe (the module ships no `tools/probe.py`, so write one from GETTING-STARTED.md): BASE shows as `BASE` not `L0` (K1/SC-005); BASE→NAVI reflected within ~1 s (K2/SC-001); modifier hold/release reflected (K3); idle produces no continuous update stream (K4/FR-007); device found among connected peripherals, not by scanning (K5).
@@ -197,5 +197,5 @@ Task T013: "Confirm keybeacon.c excluded from totem_right and settings_reset bui
 - `[P]` = different files, no dependency on an incomplete task.
 - `[Story]` labels map tasks to spec.md user stories for traceability.
 - The only production edits are **T004** (`config/west.yml`) and **T006** (`config/boards/shields/totem/totem_left.conf`); every other task is a build/verify/doc step.
-- Honor the explicit request to track `revision: main` (FR-002); the reproducibility tradeoff is recorded in plan.md Complexity Tracking.
+- Honor the request to pin the latest released tag `revision: v1.1.3` (FR-002) for reproducible builds; updating later is a one-line change (FR-011).
 - Commit after T004 and after T006 (logical groups); avoid touching module source or shield CMake/Kconfig (FR-008).

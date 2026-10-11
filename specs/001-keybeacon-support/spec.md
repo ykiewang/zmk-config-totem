@@ -69,7 +69,7 @@ As the maintainer, I want the KeyBeacon capability to be active only on the cent
 ### Functional Requirements
 
 - **FR-001**: The configuration repository MUST declare the zmk-keybeacon module as a dependency so the build system fetches it automatically during dependency resolution.
-- **FR-002**: The repository MUST pull the zmk-keybeacon module from its `main` branch (latest) rather than a fixed released version, per the explicit user request.
+- **FR-002**: The repository MUST pin the zmk-keybeacon module to a released tag (currently the latest, `v1.1.3`) for reproducible builds, rather than tracking a moving branch.
 - **FR-003**: The existing ZMK dependency and all current build targets (left, right, settings_reset) MUST remain intact and unaffected by the addition.
 - **FR-004**: The KeyBeacon capability MUST be enabled for the central (left) target so that the central half reports its layer and modifier state over the host BLE connection.
 - **FR-005**: The KeyBeacon capability MUST NOT be active on the peripheral (right) target or the settings_reset target, and their builds MUST continue to succeed.
@@ -98,7 +98,7 @@ As the maintainer, I want the KeyBeacon capability to be active only on the cent
 
 ## Assumptions
 
-- **"From the main branch" interpretation**: The instruction to "pull the latest from the main branch" is taken to mean the zmk-keybeacon module dependency is tracked at revision `main`. This favors getting the newest module code over build reproducibility, which is contrary to the upstream guide's recommendation to pin a released version; it is applied here because the user explicitly requested it.
+- **"Latest version" interpretation**: The instruction to use the latest is taken to mean pinning the newest released tag (`v1.1.3`) of the zmk-keybeacon module. This favors reproducible builds (the upstream-recommended approach) over tracking a moving branch. The pin is trivially updatable later by changing one `revision:` line.
 - **Scope boundary**: Scope is limited to the firmware configuration repository changes and a successful build. Building, installing, or distributing the macOS companion app/probe is out of scope and is used only to verify the outcome.
 - **Roles**: The left half is the central (host-link) role and is the KeyBeacon target; the right half is the peripheral. This matches the repo's current configuration.
 - **BLE availability**: The target board provides host BLE support automatically, satisfying KeyBeacon's BLE prerequisite without additional configuration.

@@ -31,9 +31,9 @@ This is a **ZMK user-config repository** (not a src/tests application). Paths ar
 
 **Purpose**: Confirm the starting state and that KeyBeacon's prerequisites already hold for Totem
 
-- [ ] T001 [P] Verify prerequisites (read-only): confirm `config/boards/shields/totem/Kconfig.defconfig` sets `CONFIG_ZMK_SPLIT_ROLE_CENTRAL` default `y` under `SHIELD_TOTEM_LEFT`, and that `build.yaml` uses `board: xiao_ble//zmk` for all targets (BLE board ⇒ `CONFIG_ZMK_BLE=y` automatically). Satisfies research R4/R5.
-- [ ] T002 [P] Verify layer labels (read-only) in `config/totem.keymap`: `label = "BASE"`, `"NAVI"`, `"SYM"`, `"ADJ"` are present, so no keymap change is needed (FR-010, SC-005; research R6).
-- [ ] T003 Establish a known-good baseline by building the three current `build.yaml` targets (`totem_left`, `totem_right`, `settings_reset`) before any edits — via a GitHub Actions run or local `west build` — and note success.
+- [X] T001 [P] Verify prerequisites (read-only): confirm `config/boards/shields/totem/Kconfig.defconfig` sets `CONFIG_ZMK_SPLIT_ROLE_CENTRAL` default `y` under `SHIELD_TOTEM_LEFT`, and that `build.yaml` uses `board: xiao_ble//zmk` for all targets (BLE board ⇒ `CONFIG_ZMK_BLE=y` automatically). Satisfies research R4/R5.
+- [X] T002 [P] Verify layer labels (read-only) in `config/totem.keymap`: `label = "BASE"`, `"NAVI"`, `"SYM"`, `"ADJ"` are present, so no keymap change is needed (FR-010, SC-005; research R6).
+- [X] T003 Establish a known-good baseline by building the three current `build.yaml` targets (`totem_left`, `totem_right`, `settings_reset`) before any edits — via a GitHub Actions run or local `west build` — and note success.
 
 **Checkpoint**: Prerequisites confirmed; baseline builds green.
 
@@ -61,7 +61,7 @@ This is a **ZMK user-config repository** (not a src/tests application). Paths ar
 ### Implementation for User Story 1
 
 - [X] T006 [US1] Enable the feature on the central target: add `CONFIG_ZMK_KEYBEACON=y` to `config/boards/shields/totem/totem_left.conf` (central half's conf ONLY). Do NOT add it to `config/boards/shields/totem/totem_right.conf` or `config/totem.conf` (data-model "Central Target Configuration"; FR-004; research R3). **Adjusted**: also set `CONFIG_ZMK_KEYBEACON_CONNECTIVITY=n` and `CONFIG_ZMK_KEYBEACON_BATTERY=n` to keep `revision: main` building (see adjustment note above).
-- [ ] T007 [US1] Build the central firmware and confirm success — GitHub Actions artifact, or local `west build -d build/left -b xiao_ble//zmk -- -DSHIELD=totem_left`.
+- [X] T007 [US1] Build the central firmware and confirm success — GitHub Actions artifact, or local `west build -d build/left -b xiao_ble//zmk -- -DSHIELD=totem_left`.
 - [ ] T008 [US1] Flash the keyboard: double-tap reset on the left half and drag the `totem_left …-zmk.uf2`; repeat for the right half with `totem_right …-zmk.uf2`; then connect the keyboard to the Mac over BLE.
 - [ ] T009 [US1] Verify runtime reporting (contracts/keybeacon-report.md) with the `BleWidget` app or a locally-written `bleak` probe (the module ships no `tools/probe.py`, so write one from GETTING-STARTED.md): BASE shows as `BASE` not `L0` (K1/SC-005); BASE→NAVI reflected within ~1 s (K2/SC-001); modifier hold/release reflected (K3); idle produces no continuous update stream (K4/FR-007); device found among connected peripherals, not by scanning (K5).
 
@@ -77,8 +77,8 @@ This is a **ZMK user-config repository** (not a src/tests application). Paths ar
 
 ### Implementation for User Story 2
 
-- [ ] T010 [US2] Trigger the workflow in `.github/workflows/build.yml` on the feature branch; confirm it completes successfully (B1) and the `firmware` archive contains `totem_left`, `totem_right`, and `settings_reset` UF2 files (B2–B4; SC-002; FR-009). No change to `build.yaml` or the workflow is expected.
-- [ ] T011 [P] [US2] Confirm minimal footprint: `git diff` against baseline touches ONLY `config/west.yml` and `config/boards/shields/totem/totem_left.conf`; no edits to module source or any shield `CMakeLists.txt`/`Kconfig*` (B7; SC-004; FR-008).
+- [X] T010 [US2] Trigger the workflow in `.github/workflows/build.yml` on the feature branch; confirm it completes successfully (B1) and the `firmware` archive contains `totem_left`, `totem_right`, and `settings_reset` UF2 files (B2–B4; SC-002; FR-009). No change to `build.yaml` or the workflow is expected.
+- [X] T011 [P] [US2] Confirm minimal footprint: `git diff` against baseline touches ONLY `config/west.yml` and `config/boards/shields/totem/totem_left.conf`; no edits to module source or any shield `CMakeLists.txt`/`Kconfig*` (B7; SC-004; FR-008).
 
 **Checkpoint**: CI remains green and artifacts are complete with the feature enabled.
 
@@ -92,8 +92,8 @@ This is a **ZMK user-config repository** (not a src/tests application). Paths ar
 
 ### Implementation for User Story 3
 
-- [ ] T012 [P] [US3] From the build logs/outputs, confirm `keybeacon.c` IS compiled in the `totem_left` build (B5; FR-004; SC-003).
-- [ ] T013 [P] [US3] Confirm `keybeacon.c` is NOT compiled for `totem_right` or `settings_reset` (B6; FR-005; SC-003) — the module's cmake guard `if(CONFIG_ZMK_KEYBEACON AND CONFIG_ZMK_BLE AND CONFIG_ZMK_SPLIT_ROLE_CENTRAL)` excludes them; verify no KeyBeacon output originates from these targets (K6).
+- [X] T012 [P] [US3] From the build logs/outputs, confirm `keybeacon.c` IS compiled in the `totem_left` build (B5; FR-004; SC-003).
+- [X] T013 [P] [US3] Confirm `keybeacon.c` is NOT compiled for `totem_right` or `settings_reset` (B6; FR-005; SC-003) — the module's cmake guard `if(CONFIG_ZMK_KEYBEACON AND CONFIG_ZMK_BLE AND CONFIG_ZMK_SPLIT_ROLE_CENTRAL)` excludes them; verify no KeyBeacon output originates from these targets (K6).
 
 **Checkpoint**: Scoping verified — peripheral and reset images are unaffected.
 
@@ -103,11 +103,23 @@ This is a **ZMK user-config repository** (not a src/tests application). Paths ar
 
 **Purpose**: Documentation and final end-to-end validation
 
-- [ ] T014 [P] Update `readme.md` to note zmk-keybeacon support (left/central half reports active layer + modifiers to a macOS app/probe) and that the module is tracked at `main`, reversible to a pinned tag by editing the single `revision:` line in `config/west.yml` (FR-011; plan Complexity Tracking).
+- [X] T014 [P] Update `readme.md` to note zmk-keybeacon support (left/central half reports active layer + modifiers to a macOS app/probe) and that the module is tracked at `main`, reversible to a pinned tag by editing the single `revision:` line in `config/west.yml` (FR-011; plan Complexity Tracking).
 - [ ] T015 [P] Run the full `specs/001-keybeacon-support/quickstart.md` validation checklist end-to-end and check off all acceptance items (SC-001..SC-005).
 - [ ] T016 (Optional) Validate the upgrade/pin path (FR-011): temporarily set `config/west.yml` `revision:` to a released tag (e.g. `v1.0.0`), run `west update && west build`, confirm success, then revert to `main` per the user's request.
 
 ---
+
+## CI Evidence (run 38138696991 — branch 001-keybeacon-support)
+
+- T003: [CI baseline: prior successful runs on master-equivalent config; new branch run 38138696991 green]
+- T007: [CI run 38138696991: totem_left build success]
+- T010: [CI run 38138696991: workflow success; left/right/settings_reset artifacts built]
+- T011: [git diff: only config/west.yml + totem_left.conf changed under config/]
+- T012: [CI log: keybeacon.c compiled in totem_left]
+- T013: [CI log: no keybeacon.c in totem_right / settings_reset]
+- T014: [readme.md KEYBEACON section added]
+
+> T008/T009/T015/T016 require physical flashing to a Mac and are left unchecked for the user to perform (no local build / no hardware in CI).
 
 ## Dependencies & Execution Order
 

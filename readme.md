@@ -16,6 +16,24 @@ TOTEM is a 38 key column-staggered split keyboard running [ZMK](https://zmk.dev/
 
 
 
+## KEYBEACON (LAYER + MODIFIER STATUS OVER BLE)
+
+This config enables [zmk-keybeacon](https://github.com/ykiewang/zmk-keybeacon): the
+central (left) half reports the active layer (name + index) and modifier state over
+its host BLE connection, so a macOS companion app / BLE probe can show your current
+layer and mods.
+
+- Enabled on the central half only via `CONFIG_ZMK_KEYBEACON=y` in
+  `config/boards/shields/totem/totem_left.conf`; the right half and `settings_reset`
+  compile it out automatically.
+- The module is tracked at `revision: main` in `config/west.yml`. To pin a specific
+  release for reproducible builds, change that single `revision:` line to a tag
+  (e.g. `v1.0.0`) and let the build run again.
+- The KBP 1.1 `CONNECTIVITY`/`BATTERY` sub-characteristics are intentionally disabled
+  (they are out of scope and the Connectivity path does not build against ZMK `main`).
+
+
+
 ## HOW TO USE
 
 - fork this repo

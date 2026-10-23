@@ -25,8 +25,8 @@ central (left) half reports keyboard status over its host BLE connection, so the
 - the active layer (name + index) and modifier state (KBP 1.0), and
 - connection status, active BLE profile, per-half battery (KBP 1.1).
 
-**Download the macOS app**: [KeyBeacon 0.2.0](https://github.com/ykiewang/keybeacon/releases/tag/app-v0.2.0)
-(.dmg / .zip — see the release page for first-launch instructions on unsigned builds).
+**Download the macOS app**: [KeyBeacon 0.2.1](https://github.com/ykiewang/keybeacon/releases/tag/app-v0.2.1)
+(.dmg / .zip — first launch: right-click → Open → confirm once).
 
 **Config details**:
 

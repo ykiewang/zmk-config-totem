@@ -11,6 +11,6 @@ manifest:
       import: app/west.yml
     - name: zmk-keybeacon
       remote: ykiewang
-      revision: v1.1.4
+      revision: v1.2.0
   self:
     path: config

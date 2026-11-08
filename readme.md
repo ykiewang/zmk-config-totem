@@ -18,12 +18,14 @@ TOTEM is a 38 key column-staggered split keyboard running [ZMK](https://zmk.dev/
 
 ## KEYBEACON (LAYER + MODIFIER STATUS OVER BLE)
 
-This config enables [zmk-keybeacon](https://github.com/ykiewang/zmk-keybeacon) (`v1.1.4`): the
+This config enables [zmk-keybeacon](https://github.com/ykiewang/zmk-keybeacon) (`v1.2.0`): the
 central (left) half reports keyboard status over its host BLE connection, so the
 [KeyBeacon](https://github.com/ykiewang/keybeacon) desktop app can show:
 
-- the active layer (name + index) and modifier state (KBP 1.0), and
-- connection status, active BLE profile, per-half battery (KBP 1.1).
+- the active layer (name + index) and modifier state (KBP 1.0),
+- connection status, active BLE profile, per-half battery (KBP 1.1), and
+- per-connection host-link slot so each bonded host can tell "in use on this
+  computer" from "active on another computer" (KBP 1.2 `HOST_LINK` characteristic).
 
 **Download the macOS app**: [KeyBeacon 0.2.1](https://github.com/ykiewang/keybeacon/releases/tag/app-v0.2.1)
 (.dmg / .zip — first launch: right-click → Open → confirm once).
@@ -33,12 +35,14 @@ central (left) half reports keyboard status over its host BLE connection, so the
 - Enabled on the central half only via `CONFIG_ZMK_KEYBEACON=y` in
   `config/boards/shields/totem/totem_left.conf`; the right half and `settings_reset`
   compile it out automatically.
-- Both KBP 1.1 sub-characteristics are on (`CONFIG_ZMK_KEYBEACON_CONNECTIVITY=y` /
-  `CONFIG_ZMK_KEYBEACON_BATTERY=y`), plus `CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y`
-  so the central can report the right half's battery.
-- Module pinned at `revision: v1.1.4` in `config/west.yml` — includes the ZMK API
+- All KBP 1.1/1.2 sub-characteristics are on (`CONFIG_ZMK_KEYBEACON_CONNECTIVITY=y` /
+  `CONFIG_ZMK_KEYBEACON_BATTERY=y` / `CONFIG_ZMK_KEYBEACON_HOST_LINK=y`), plus
+  `CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y` so the central can report
+  the right half's battery.
+- Module pinned at `revision: v1.2.0` in `config/west.yml` — includes the ZMK API
   compatibility contract (fail-fast at CMake configure time if ZMK upstream renames
-  symbols). See [zmk-keybeacon CHANGELOG](https://github.com/ykiewang/zmk-keybeacon/blob/main/CHANGELOG.md).
+  symbols), and adds the KBP 1.2 per-connection Host-Link characteristic. See
+  [zmk-keybeacon CHANGELOG](https://github.com/ykiewang/zmk-keybeacon/blob/main/CHANGELOG.md).
 
 
 

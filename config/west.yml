@@ -11,6 +11,6 @@ manifest:
       import: app/west.yml
     - name: zmk-keybeacon
       remote: ykiewang
-      revision: feat/005-host-link-profile-awareness
+      revision: v1.2.0
   self:
     path: config

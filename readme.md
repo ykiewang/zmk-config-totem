@@ -22,22 +22,22 @@ This config enables [zmk-keybeacon](https://github.com/ykiewang/zmk-keybeacon): 
 central (left) half reports keyboard status over its host BLE connection, so a macOS
 companion app / BLE probe can show:
 
-- the active layer (name + index) and modifier state (KBP 1.0 characteristic), and
+- the active layer (name + index) and modifier state (KBP 1.0 characteristic),
 - connection status, active profile, and both halves' battery (KBP 1.1
-  `CONNECTIVITY` + `BATTERY` characteristics).
+  `CONNECTIVITY` + `BATTERY` characteristics), and
+- per-connection host-link slot so each bonded host can tell "in use on this
+  computer" from "active on another computer" (KBP 1.2 `HOST_LINK` characteristic).
 
 - Enabled on the central half only via `CONFIG_ZMK_KEYBEACON=y` in
   `config/boards/shields/totem/totem_left.conf`; the right half and `settings_reset`
   compile it out automatically.
-- Both KBP 1.1 sub-characteristics are on (`CONFIG_ZMK_KEYBEACON_CONNECTIVITY=y` /
-  `CONFIG_ZMK_KEYBEACON_BATTERY=y`), plus `CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y`
-  so the central can report the right half's battery.
-- The module is currently pinned at `revision: fix/endpoint-get-selected` in
-  `config/west.yml` — a fix branch carrying the one-line
-  `zmk_endpoints_selected()` → `zmk_endpoint_get_selected()` correction (the old name
-  never existed in ZMK and broke the Connectivity path against ZMK `main`). Once that
-  fix is merged and released upstream, point `revision:` at the new tag for reproducible
-  builds.
+- All KBP 1.1/1.2 sub-characteristics are on (`CONFIG_ZMK_KEYBEACON_CONNECTIVITY=y` /
+  `CONFIG_ZMK_KEYBEACON_BATTERY=y` / `CONFIG_ZMK_KEYBEACON_HOST_LINK=y`), plus
+  `CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y` so the central can report
+  the right half's battery.
+- The module is pinned at `revision: v1.2.0` in `config/west.yml`. The ZMK API
+  compatibility check runs at CMake configure time (the module probes for the correct
+  `zmk_endpoint_get_selected()` / `zmk_endpoints_selected()` symbol automatically).
 
 
 

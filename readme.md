@@ -27,6 +27,8 @@ central (left) half reports keyboard status over its host BLE connection, so the
 - per-connection host-link slot so each bonded host can tell "in use on this
   computer" from "active on another computer" (KBP 1.2 `HOST_LINK` characteristic).
 
+![KeyBeacon on macOS: active layer, connectivity, per-half battery and output](/docs/images/keybeacon-macos.png)
+
 **Download the desktop app**: [KeyBeacon 0.5.0](https://github.com/ykiewang/keybeacon/releases/tag/app-v0.5.0)
 (.dmg / .zip for macOS; self-contained .zip for Windows x64 / arm64 — first launch: right-click → Open on macOS, "More info → Run anyway" on Windows).
 
